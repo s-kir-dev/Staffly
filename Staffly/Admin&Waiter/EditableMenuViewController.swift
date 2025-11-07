@@ -95,7 +95,7 @@ class EditableMenuViewController: UIViewController {
                         group.leave()
                     } else {
                         loadWithRetry(from: product.productImageURL.replacingOccurrences(of: "http://", with: "https://"), retries: 2) { image in
-                            imageCache[product.id] = image ?? UIImage(systemName: "house.fill")
+                            imageCache[product.id] = image ?? UIImage(named: "блюдо")
                             if let image = image {
                                 saveImageLocally(image: image, name: imageName)
                             }
@@ -166,7 +166,7 @@ extension EditableMenuViewController: UITableViewDelegate, UITableViewDataSource
         let product = products[indexPath.row]
 
         cell.menuNumberLabel.text = "\(product.menuNumber)"
-        cell.productImageView.image = globalImageCache[product.id] ?? UIImage(systemName: "house")
+        cell.productImageView.image = globalImageCache[product.id] ?? UIImage(named: "блюдо")
         cell.productImageView.layer.cornerRadius = 17
         cell.productImageView.clipsToBounds = true
         cell.productNameLabel.text = product.productName

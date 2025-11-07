@@ -243,11 +243,24 @@ class BillViewController: UIViewController {
         }
         
         group.notify(queue: .main) {
-            tables.remove(at: tableIndex)
-            saveTables(tables)
-            
-            alert.dismiss(animated: true) {
-                self.navigationController?.popViewController(animated: true)
+            let selfID = UserDefaults.standard.string(forKey: "selfID")!
+            let cafeID = UserDefaults.standard.string(forKey: "cafeID")!
+
+            downloadUserData(cafeID, selfID) { currentEmployee in
+                var updatedEmployee = currentEmployee
+                let tips = self.finalTableBill - self.table.bill
+                updatedEmployee.tips += tips.roundValue()
+                updatedEmployee.tablesCount += 1
+                updatedEmployee.cafeProfit += self.table.bill
+
+                uploadUserData(cafeID, selfID, updatedEmployee) { _ in
+                    tables.remove(at: tableIndex)
+                    saveTables(tables)
+                    
+                    alert.dismiss(animated: true) {
+                        self.navigationController?.popViewController(animated: true)
+                    }
+                }
             }
         }
     }

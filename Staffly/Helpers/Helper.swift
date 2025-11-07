@@ -157,6 +157,20 @@ struct Table: Codable, Equatable {
 
 var tables: [Table] = []
 
+struct Employee {
+    var name: String
+    var surname: String
+    var email: String
+    var password: String
+    var role: String
+    var tablesCount: Int
+    var tips: Double
+    var productsCount: Int
+    var cafeProfit: Double
+}
+
+var employee: Employee = Employee(name: "", surname: "", email: "", password: "", role: "", tablesCount: 0, tips: 0, productsCount: 0, cafeProfit: 0) // Я
+
 // MARK : - FirebaseDatabase
 
 let db = Database.database().reference()
@@ -264,6 +278,49 @@ func orderProducts(_ products: [Product], _ cafeID: String, _ tableNumber: Int, 
     }
 }
 
+func downloadUserData(_ cafeID: String, _ selfID: String, completion: @escaping (Employee) -> Void) {
+    db.child("Places").child(cafeID).child("employees").child(selfID).observeSingleEvent(of: .value) { snapshot in
+        guard let data = snapshot.value as? [String: Any] else {
+            completion(Employee(name: "", surname: "", email: "", password: "", role: "", tablesCount: 0, tips: 0.0, productsCount: 0, cafeProfit: 0.0))
+            return
+        }
+
+        let name = data["name"] as? String ?? ""
+        let surname = data["surname"] as? String ?? ""
+        let role = data["role"] as? String ?? ""
+        let email = data["email"] as? String ?? ""
+        let password = data["password"] as? String ?? ""
+        let productsCount = data["productsCount"] as? Int ?? 0
+        let cafeProfit = data["cafeProfit"] as? Double ?? 0.0
+        let tablesCount = data["tablesCount"] as? Int ?? 0
+        let tips = data["tips"] as? Double ?? 0.0
+
+        let employee = Employee(
+            name: name,
+            surname: surname,
+            email: email,
+            password: password,
+            role: role,
+            tablesCount: tablesCount,
+            tips: tips,
+            productsCount: productsCount,
+            cafeProfit: cafeProfit
+        )
+
+        completion(employee)
+    }
+}
+
+func uploadUserData(_ cafeID: String, _ selfID: String, _ employee: Employee, completion: @escaping (Error?) -> Void) {
+    db.child("Places").child(cafeID).child("employees").child(selfID).updateChildValues([
+        "productsCount": employee.productsCount,
+        "cafeProfit": employee.cafeProfit,
+        "tablesCount": employee.tablesCount,
+        "tips": employee.tips
+    ]) { error, _ in
+        completion(error)
+    }
+}
 
 // MARK : - Local data
 
@@ -363,7 +420,7 @@ func generatePersonalID(_ cafeID: String, _ name: String, _ surname: String, _ r
 }
 
 func saveToUserDefaults(_ name: String, _ surname: String, _ cafeID: String, _ selfID: String, _ role: String) {
-    UserDefaults.standard.set(0.0, forKey: "tips")
+    UserDefaults.standard.set(0.00, forKey: "tips")
     UserDefaults.standard.set(name, forKey: "userName")
     UserDefaults.standard.set(surname, forKey: "userSurname")
     UserDefaults.standard.set(cafeID, forKey: "cafeID")

@@ -13,15 +13,14 @@ class OrdersViewController: UIViewController {
     @IBOutlet weak var tableView: UITableView!
     
     let cafeID = UserDefaults.standard.string(forKey: "cafeID")!
+    let selfID = UserDefaults.standard.string(forKey: "selfID")!
     var orders: [Product] = []
-    
     var orderKeys: [String] = []
     
     override func viewDidLoad() {
         super.viewDidLoad()
         tableView.delegate = self
         tableView.dataSource = self
-        
         observeOrders()
     }
     
@@ -33,8 +32,6 @@ class OrdersViewController: UIViewController {
             var keys: [String] = []
             
             for case let tableSnapshot as DataSnapshot in snapshot.children {
-                _ = tableSnapshot.key
-                
                 for case let orderSnapshot as DataSnapshot in tableSnapshot.children {
                     if let dict = orderSnapshot.value as? [String: Any],
                        let id = dict["id"] as? String,
@@ -56,16 +53,17 @@ class OrdersViewController: UIViewController {
                             productPrice: productPrice,
                             additionWishes: additionWishes
                         )
-                        
                         newOrders.append(product)
                         keys.append(orderSnapshot.key)
                     }
                 }
             }
             
-            self.orders = newOrders
-            self.orderKeys = keys
-            self.tableView.reloadData()
+            DispatchQueue.main.async {
+                self.orders = newOrders
+                self.orderKeys = keys
+                self.tableView.reloadData()
+            }
         }
     }
 }
@@ -82,7 +80,7 @@ extension OrdersViewController: UITableViewDelegate, UITableViewDataSource {
         
         cell.productImageView.layer.cornerRadius = 17
         cell.productImageView.clipsToBounds = true
-        cell.productImageView.image = globalImageCache[product.id] ?? UIImage(systemName: "house")
+        cell.productImageView.image = globalImageCache[product.id] ?? UIImage(named: "блюдо")
         cell.productNameLabel.text = product.productName
         cell.additionalWishesLabel.text = product.additionWishes
         cell.selectionStyle = .none
@@ -96,7 +94,7 @@ extension OrdersViewController: UITableViewDelegate, UITableViewDataSource {
     
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let key = orderKeys[indexPath.row]
-        _ = orders[indexPath.row]
+        let product = orders[indexPath.row]
         
         let deleteAction = UIContextualAction(style: .destructive, title: "Готово") { _, _, completionHandler in
             let ordersRef = db.child("Places").child(self.cafeID).child("orders")
@@ -109,11 +107,38 @@ extension OrdersViewController: UITableViewDelegate, UITableViewDataSource {
                         let readyRef = db.child("Places").child(self.cafeID).child("readyOrders").child(tableNumber).child(key)
                         
                         orderRef.observeSingleEvent(of: .value) { orderSnap in
-                            if let value = orderSnap.value as? [String: Any] {
-                                readyRef.setValue(value) { error, _ in
-                                    if error == nil {
-                                        orderRef.removeValue()
+                            guard let value = orderSnap.value as? [String: Any] else {
+                                completionHandler(false)
+                                return
+                            }
+                            
+                            readyRef.setValue(value) { error, _ in
+                                guard error == nil else {
+                                    completionHandler(false)
+                                    return
+                                }
+                                
+                                orderRef.removeValue { error, _ in
+                                    guard error == nil else {
+                                        completionHandler(false)
+                                        return
                                     }
+                                    
+                                    downloadUserData(self.cafeID, self.selfID, completion: {
+                                        employeeData in
+                                        employee = employeeData
+                                        employee.productsCount += 1
+                                        employee.cafeProfit += product.productPrice
+                                        
+                                        uploadUserData(self.cafeID, self.selfID, employee) { _ in
+                                            DispatchQueue.main.async {
+                                                self.orders.remove(at: indexPath.row)
+                                                self.orderKeys.remove(at: indexPath.row)
+                                                self.tableView.deleteRows(at: [indexPath], with: .fade)
+                                                completionHandler(true)
+                                            }
+                                        }
+                                    })
                                 }
                             }
                         }
@@ -121,12 +146,11 @@ extension OrdersViewController: UITableViewDelegate, UITableViewDataSource {
                     }
                 }
             }
-            
-            completionHandler(true)
         }
         
         deleteAction.backgroundColor = .systemGreen
         deleteAction.image = UIImage(systemName: "checkmark.seal.fill")
+        
         return UISwipeActionsConfiguration(actions: [deleteAction])
     }
 }

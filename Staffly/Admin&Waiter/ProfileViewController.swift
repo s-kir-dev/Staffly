@@ -21,7 +21,7 @@ class ProfileViewController: UIViewController {
     @IBOutlet weak var deleteAccountButton: UIButton!
     
     let role = UserDefaults.standard.string(forKey: "role") ?? ""
-    var roleString = ""
+    var roleString = "" // форматированная для отображения
     var cafeID = ""
     var selfID = ""
     
@@ -44,7 +44,11 @@ class ProfileViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        setupUI()
+        downloadUserData(cafeID, selfID, completion: {
+            employeeData in
+            employee = employeeData
+            self.setupUI()
+        })
     }
     
     @objc func signOutButtonTapped() {
@@ -81,11 +85,7 @@ class ProfileViewController: UIViewController {
         UserDefaults.standard.synchronize()
         self.performSegue(withIdentifier: "onboardingVC", sender: self)
     }
-    
-    @objc func workersButtonTapped() {
-        performSegue(withIdentifier: "workersVC", sender: self)
-    }
-    
+        
     @objc func deleteAccountButtonTapped() {
         let alert = UIAlertController(title: "Подтверждение", message: "Вы уверены, что хотите удалить аккаунт?", preferredStyle: .alert)
         let okAction = UIAlertAction(title: "Да", style: .default, handler: {
@@ -126,24 +126,25 @@ class ProfileViewController: UIViewController {
             workersButton.isHidden = false
             cafeIDLabel.isHidden = false
             summaTipsLabel.isHidden = false
+            summaTipsLabel.text = "Сумма чаевых: \(employee.tips)р."
         case "Waiter":
             roleString = "Официант"
             workersButton.isHidden = true
             inviteCodesButton.isHidden = true
             cafeIDLabel.isHidden = true
+            summaTipsLabel.text = "Сумма чаевых: \(employee.tips)р."
         case "Cook":
             roleString = "Повар"
             workersButton.isHidden = true
             cafeIDLabel.isHidden = true
             inviteCodesButton.isHidden = true
-            summaTipsLabel.isHidden = true
+            summaTipsLabel.text = "Блюд приготовлено: \(employee.productsCount)"
         default:
             break
         }
         
         let name = UserDefaults.standard.string(forKey: "userName") ?? ""
         let surname = UserDefaults.standard.string(forKey: "userSurname") ?? ""
-        let tips = UserDefaults.standard.double(forKey: "userTips")
         
         profileImageView.layer.cornerRadius = profileImageView.frame.width / 2
         
@@ -152,7 +153,6 @@ class ProfileViewController: UIViewController {
         userNameSurnameLabel.text = "\(name) \(surname) (\(roleString))"
         selfIDLabel.text = "ID: \(selfID)"
         cafeIDLabel.text = "ID заведения: \(cafeID)"
-        summaTipsLabel.text = "Сумма чаевых: \(tips)"
     }
 }
 

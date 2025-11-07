@@ -150,7 +150,7 @@ extension ReadyOrdersViewController: UITableViewDelegate, UITableViewDataSource 
         
         cell.productImageView.layer.cornerRadius = 17
         cell.productImageView.clipsToBounds = true
-        cell.productImageView.image = globalImageCache[product.id] ?? UIImage(systemName: "house")
+        cell.productImageView.image = globalImageCache[product.id] ?? UIImage(named: "блюдо")
         cell.productNameLabel.text = product.productName
         cell.clientNumberLabel.text = "Клиент \(product.clientNumber)"
         cell.tableNumberLabel.text = "Стол №\(product.tableNumber)"

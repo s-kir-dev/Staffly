@@ -64,7 +64,7 @@ class DownloadViewController: UIViewController {
                             saveImageLocally(image: image, name: imageName)
                             debugPrint("✅ Картинка \(product.productName) загружена")
                         } else {
-                            imageCache[product.id] = UIImage(systemName: "house.fill")
+                            imageCache[product.id] = UIImage(named: "блюдо")
                             debugPrint("❌ Не удалось загрузить картинку для \(product.productName)")
                         }
                         group.leave()
