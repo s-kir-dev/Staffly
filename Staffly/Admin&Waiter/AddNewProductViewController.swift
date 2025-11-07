@@ -63,22 +63,30 @@ class AddNewProductViewController: UIViewController {
             showAlert("Ошибка", "Введите номер блюда")
             return
         }
-        guard let name = productNameTextField.text, !name.isEmpty else {
+        
+        guard let name = productNameTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else {
             showAlert("Ошибка", "Введите название блюда")
             return
         }
-        guard let description = productDescriptionTextView.text, !description.isEmpty else {
+        
+        guard let description = productDescriptionTextView.text?.trimmingCharacters(in: .whitespacesAndNewlines), !description.isEmpty else {
             showAlert("Ошибка", "Введите описание блюда")
             return
         }
-        guard let category = productCategoryTextField.text?.capitalized, !category.isEmpty else {
+        
+        guard let rawCategory = productCategoryTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !rawCategory.isEmpty else {
             showAlert("Ошибка", "Введите категорию блюда")
             return
         }
+        
+        let normalizedCategory = rawCategory.replacingOccurrences(of: " ", with: "").lowercased()
+        let categoryDisplay = rawCategory.capitalized
+        
         guard let priceText = productPriceTextField.text, let price = Double(priceText)?.roundValue() else {
             showAlert("Ошибка", "Введите стоимость блюда")
             return
         }
+        
         let image = productImageView.image ?? UIImage(named: "блюдо")!
         
         guard let imageData = image.pngData() else {
@@ -86,106 +94,99 @@ class AddNewProductViewController: UIViewController {
             return
         }
         
-        checkNumberExisting(number, cafeID, completion: { isExistingNumber in
-            if isExistingNumber {
-                let alert = UIAlertController(title: nil, message: "Идёт запись информации в базу данных…", preferredStyle: .alert)
-                
-                let loadingIndicator = UIActivityIndicatorView(style: .medium)
-                loadingIndicator.translatesAutoresizingMaskIntoConstraints = false
-                loadingIndicator.startAnimating()
-                
-                alert.view.addSubview(loadingIndicator)
-                
-                NSLayoutConstraint.activate([
-                    loadingIndicator.centerXAnchor.constraint(equalTo: alert.view.centerXAnchor),
-                    loadingIndicator.bottomAnchor.constraint(equalTo: alert.view.bottomAnchor, constant: -20)
-                ])
-                
-                self.present(alert, animated: true)
-                
-                let productId = UUID().uuidString
-                
-                self.cloudinary.uploadImage(imageData, publicId: productId) { result in
-                    switch result {
-                    case .success(let imageUrl):
-                        print("✅ Изображение загружено: \(imageUrl)")
-                        
-                        let product = Product(id: productId, menuNumber: number, productCategory: category, productDescription: description, productImageURL: imageUrl, productName: name, productPrice: price, additionWishes: "")
-                        
-                        let cafeID = UserDefaults.standard.string(forKey: "cafeID") ?? "cafeID1"
-                        
-                        let categoriesRef = db.child("Places").child(cafeID).child("categories")
-                        
-                        categoriesRef.observeSingleEvent(of: .value) { snapshot in
-                            var categories: [String] = []
-                            
-                            if let value = snapshot.value as? [String: Any],
-                               let existingCategories = value["categories"] as? [String] {
-                                categories = existingCategories
-                            }
-                            
-                            // Добавляем новую категорию только если её нет
-                            if !categories.contains(product.productCategory) {
-                                categories.append(product.productCategory)
-                            }
-                            
-                            // Сохраняем обратно в Firebase
-                            categoriesRef.setValue(["categories": categories])
+        checkNumberExisting(number, cafeID) { isExistingNumber in
+            if !isExistingNumber {
+                self.showAlert("Ошибка", "Номер \(number) уже занят другим блюдом")
+                return
+            }
+            
+            let alert = UIAlertController(title: nil, message: "Идёт запись информации в базу данных…", preferredStyle: .alert)
+            let loadingIndicator = UIActivityIndicatorView(style: .medium)
+            loadingIndicator.translatesAutoresizingMaskIntoConstraints = false
+            loadingIndicator.startAnimating()
+            alert.view.addSubview(loadingIndicator)
+            NSLayoutConstraint.activate([
+                loadingIndicator.centerXAnchor.constraint(equalTo: alert.view.centerXAnchor),
+                loadingIndicator.bottomAnchor.constraint(equalTo: alert.view.bottomAnchor, constant: -20)
+            ])
+            self.present(alert, animated: true)
+            
+            let productId = UUID().uuidString
+            
+            self.cloudinary.uploadImage(imageData, publicId: productId) { result in
+                switch result {
+                case .success(let imageUrl):
+                    let product = Product(
+                        id: productId,
+                        menuNumber: number,
+                        productCategory: categoryDisplay,
+                        productDescription: description,
+                        productImageURL: imageUrl,
+                        productName: name,
+                        productPrice: price,
+                        additionWishes: ""
+                    )
+                    
+                    let categoriesRef = db.child("Places").child(self.cafeID).child("categories")
+                    categoriesRef.observeSingleEvent(of: .value) { snapshot in
+                        var categories: [String] = []
+                        var immutableCategories: [String] = []
+                        if let value = snapshot.value as? [String: Any],
+                           let existingCategories = value["categories"] as? [String] {
+                            immutableCategories = existingCategories
+                            categories = existingCategories.map { $0.replacingOccurrences(of: " ", with: "").lowercased() }
                         }
                         
-                        db.child("Places").child(cafeID).child("menu").child(productId).setValue([
-                            "id": product.id,
-                            "menuNumber": product.menuNumber,
-                            "productCategory": product.productCategory,
-                            "productDescription": product.productDescription,
-                            "productImageURL": product.productImageURL,
-                            "productName": product.productName,
-                            "productPrice": product.productPrice,
-                            "additionWishes": product.additionWishes
-                        ]) { error, _ in
-                            DispatchQueue.main.async {
-                                alert.dismiss(animated: true)
-                            }
-                            
-                            if let error = error {
-                                print("❌ Ошибка добавления в БД: \(error.localizedDescription)")
-                                return
-                            }
-                            
-                            print("✅ Продукт добавлен в Firebase с ID: \(productId)")
-                            
-                            self.cloudinary.loadImage(from: imageUrl) { loadedImage in
-                                if let _ = loadedImage {
-                                    print("✅ Картинка успешно доступна в Cloudinary")
-                                } else {
-                                    print("❌ Не удалось проверить картинку в Cloudinary")
-                                }
-                            }
-                            
-                            DispatchQueue.main.async {
-                                self.productNumberTextField.text = ""
-                                self.productNameTextField.text = ""
-                                self.productDescriptionTextView.text = ""
-                                self.productCategoryTextField.text = ""
-                                self.productPriceTextField.text = ""
-                                self.productImageView.image = nil
-                                
-                                self.productPriceTextField.text = ""
-                                
-                            }
+                        if !categories.contains(normalizedCategory) {
+                            immutableCategories.append(categoryDisplay)
                         }
                         
-                    case .failure(let error):
+                        categoriesRef.setValue(["categories": immutableCategories])
+                    }
+                    
+                    db.child("Places").child(self.cafeID).child("menu").child(productId).setValue([
+                        "id": product.id,
+                        "menuNumber": product.menuNumber,
+                        "productCategory": product.productCategory,
+                        "productDescription": product.productDescription,
+                        "productImageURL": product.productImageURL,
+                        "productName": product.productName,
+                        "productPrice": product.productPrice,
+                        "additionWishes": product.additionWishes
+                    ]) { error, _ in
                         DispatchQueue.main.async {
                             alert.dismiss(animated: true)
                         }
-                        print("❌ Ошибка загрузки изображения: \(error.localizedDescription)")
+                        if let error = error {
+                            print("❌ Ошибка добавления в БД: \(error.localizedDescription)")
+                            return
+                        }
+                        
+                        self.cloudinary.loadImage(from: imageUrl) { loadedImage in
+                            if loadedImage != nil {
+                                print("✅ Картинка успешно доступна в Cloudinary")
+                            } else {
+                                print("❌ Не удалось проверить картинку в Cloudinary")
+                            }
+                        }
+                        
+                        DispatchQueue.main.async {
+                            self.productNumberTextField.text = ""
+                            self.productNameTextField.text = ""
+                            self.productDescriptionTextView.text = ""
+                            self.productCategoryTextField.text = ""
+                            self.productPriceTextField.text = ""
+                            self.productImageView.image = nil
+                        }
                     }
+                case .failure(let error):
+                    DispatchQueue.main.async {
+                        alert.dismiss(animated: true)
+                    }
+                    print("❌ Ошибка загрузки изображения: \(error.localizedDescription)")
                 }
-            } else { // если номер не доступен
-                self.showAlert("Ошибка", "Номер \(number) уже занят другим блюдом")
             }
-        })
+        }
     }
     
     func showAlert(_ title: String, _ message: String) {

@@ -37,7 +37,7 @@ class CloudinaryManager {
         params.setPublicId("reminderFolder/\(publicId)")
         
         cloudinary.createUploader().upload(data: imageData,
-                                           uploadPreset: "SepBill",
+                                           uploadPreset: "Staffly",
                                            params: params, completionHandler:  { result, error in
             if let error = error {
                 completion(.failure(error))
@@ -58,37 +58,19 @@ class CloudinaryManager {
     
     func loadImage(from urlString: String, completion: @escaping (UIImage?) -> Void) {
         guard let url = URL(string: urlString.replacingOccurrences(of: "http://", with: "https://")) else {
-            completion(UIImage(systemName: "house.fill"))
+            completion(UIImage(named: "блюдо"))
             return
         }
         
         URLSession.shared.dataTask(with: url) { data, _, error in
             guard let data = data, error == nil, let image = UIImage(data: data) else {
-                completion(UIImage(systemName: "house.fill"))
+                completion(UIImage(named: "блюдо"))
                 return
             }
             DispatchQueue.main.async {
                 completion(image)
             }
         }.resume()
-    }
-    
-    func deleteImage(publicId: String, completion: @escaping (Result<Void, Error>) -> Void) {
-        let fullPublicId = "SepBill/\(publicId)"
-        
-        cloudinary.createManagementApi().destroy(fullPublicId) { result, error in
-            if let error = error {
-                completion(.failure(error))
-            } else if result?.result == "ok" {
-                completion(.success(()))
-            } else {
-                completion(.failure(NSError(
-                    domain: "CloudinaryDelete",
-                    code: -1,
-                    userInfo: [NSLocalizedDescriptionKey: "Delete failed"]
-                )))
-            }
-        }
     }
 }
 

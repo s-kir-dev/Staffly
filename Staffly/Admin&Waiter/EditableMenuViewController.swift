@@ -49,11 +49,13 @@ class EditableMenuViewController: UIViewController {
         searchController.searchBar.placeholder = "Введите название блюда"
         searchController.searchResultsUpdater = self
         searchController.delegate = self
+        
+        //setupMenuButton() //
     }
 
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        setupMenuButton()
+//        setupMenuButton()
     }
 
     @objc func refreshMenu() {
@@ -130,17 +132,17 @@ class EditableMenuViewController: UIViewController {
             UIAction(title: category) { _ in
                 self.selectedCategory = category
                 self.products = self.allProducts.filter { $0.productCategory == category }
-                self.filterMenuButton.setTitle(category, for: .normal)
+                self.filterMenuButton.setTitle(" \(category)", for: .normal)
                 UIView.transition(with: self.tableView, duration: 0.25, options: .transitionCrossDissolve) {
                     self.tableView.reloadData()
                 }
             }
         }
 
-        let resetAction = UIAction(title: "Все категории", attributes: .destructive) { _ in
+        let resetAction = UIAction(title: " Все категории", attributes: .destructive) { _ in
             self.selectedCategory = ""
             self.products = self.allProducts
-            self.filterMenuButton.setTitle("Все категории", for: .normal)
+            self.filterMenuButton.setTitle(" Все категории", for: .normal)
             UIView.transition(with: self.tableView, duration: 0.25, options: .transitionCrossDissolve) {
                 self.tableView.reloadData()
             }
@@ -149,7 +151,7 @@ class EditableMenuViewController: UIViewController {
         let menu = UIMenu(title: "Выберите категорию", children: [resetAction] + categoryActions)
         filterMenuButton.menu = menu
         filterMenuButton.showsMenuAsPrimaryAction = true
-        filterMenuButton.setTitle("Все категории", for: .normal)
+        filterMenuButton.setTitle(" Все категории", for: .normal)
     }
 }
 

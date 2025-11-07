@@ -140,19 +140,19 @@
                                     </tableViewCell>
                                 </prototypes>
                             </tableView>
-                            <button opaque="NO" contentMode="scaleToFill" showsMenuAsPrimaryAction="YES" contentHorizontalAlignment="leading" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="asL-cY-ERl">
+                            <button opaque="NO" contentMode="scaleToFill" showsMenuAsPrimaryAction="YES" contentHorizontalAlignment="leading" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="asL-cY-ERl">
                                 <rect key="frame" x="16" y="113" width="361" height="54"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="54" id="n3B-BD-QZV"/>
                                 </constraints>
-                                <fontDescription key="fontDescription" type="system" pointSize="30"/>
+                                <fontDescription key="fontDescription" type="system" weight="heavy" pointSize="20"/>
                                 <menu key="menu" id="09q-a4-N3d">
                                     <children>
                                         <command title="Item 1" id="d1X-fb-hbh"/>
                                         <command title="Item 2" id="cts-RN-1NS"/>
                                     </children>
                                 </menu>
-                                <state key="normal" title="Фильтр">
+                                <state key="normal" title=" Фильтр" image="line.3.horizontal.decrease.circle" catalog="system">
                                     <color key="titleColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 </state>
                             </button>
@@ -1557,19 +1557,19 @@
                                     </tableViewCell>
                                 </prototypes>
                             </tableView>
-                            <button opaque="NO" contentMode="scaleToFill" showsMenuAsPrimaryAction="YES" contentHorizontalAlignment="leading" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="GSA-Si-5ic">
+                            <button opaque="NO" contentMode="scaleToFill" showsMenuAsPrimaryAction="YES" contentHorizontalAlignment="leading" contentVerticalAlignment="center" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="GSA-Si-5ic">
                                 <rect key="frame" x="16" y="113" width="361" height="54"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="54" id="fbG-NO-Tck"/>
                                 </constraints>
-                                <fontDescription key="fontDescription" type="system" pointSize="30"/>
+                                <fontDescription key="fontDescription" type="system" weight="heavy" pointSize="20"/>
                                 <menu key="menu" id="GXN-UV-ayJ">
                                     <children>
                                         <command title="Item 1" id="QlU-qx-vQX"/>
                                         <command title="Item 2" id="BVc-Dk-naT"/>
                                     </children>
                                 </menu>
-                                <state key="normal" title="Фильтр">
+                                <state key="normal" title=" Фильтр" image="line.3.horizontal.decrease.circle" catalog="system">
                                     <color key="titleColor" white="0.0" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
                                 </state>
                             </button>
@@ -2889,7 +2889,6 @@
         </scene>
     </scenes>
     <inferredMetricsTieBreakers>
-        <segue reference="hfR-zX-bjX"/>
         <segue reference="Ptn-3q-zkQ"/>
         <segue reference="9v7-7H-KzT"/>
         <segue reference="NQT-T3-pgq"/>
@@ -2906,6 +2905,7 @@
         <image name="delivery-city" width="714" height="370"/>
         <image name="fork.knife.circle.fill" catalog="system" width="128" height="123"/>
         <image name="info.circle" catalog="system" width="128" height="123"/>
+        <image name="line.3.horizontal.decrease.circle" catalog="system" width="128" height="123"/>
         <image name="list.bullet.clipboard.fill" catalog="system" width="98" height="128"/>
         <image name="menucard.fill" catalog="system" width="105" height="128"/>
         <image name="person.crop.circle" catalog="system" width="128" height="123"/>
