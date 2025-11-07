@@ -262,6 +262,7 @@ extension MenuViewController: UITableViewDelegate, UITableViewDataSource {
         let cell = tableView.dequeueReusableCell(withIdentifier: "cell") as! ProductTableViewCell
         let product = products[indexPath.row]
 
+        cell.productSwitch.isOn = orderedProducts.contains(where: { $0.id == product.id })
         cell.menuNumberLabel.text = "\(product.menuNumber)"
         cell.productImageView.image = globalImageCache[product.id] ?? UIImage(named: "блюдо")
         cell.productImageView.layer.cornerRadius = 17
