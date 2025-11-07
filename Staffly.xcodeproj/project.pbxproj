@@ -6,8 +6,16 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		7EF5D1938AD40000318D0EC9 /* Pods_Staffly.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = FDA6BE72BAB8BFF4E1E98684 /* Pods_Staffly.framework */; };
+		E0F174932EBE2F2E006A0416 /* Cloudinary in Frameworks */ = {isa = PBXBuildFile; productRef = E0F174922EBE2F2E006A0416 /* Cloudinary */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
+		43C283E1A03AFB6E6B404879 /* Pods-Staffly.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Staffly.debug.xcconfig"; path = "Target Support Files/Pods-Staffly/Pods-Staffly.debug.xcconfig"; sourceTree = "<group>"; };
+		7B8B56258C5126A84BDE17AE /* Pods-Staffly.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Staffly.release.xcconfig"; path = "Target Support Files/Pods-Staffly/Pods-Staffly.release.xcconfig"; sourceTree = "<group>"; };
 		E0F174722EBE2ED8006A0416 /* Staffly.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Staffly.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FDA6BE72BAB8BFF4E1E98684 /* Pods_Staffly.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Staffly.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -36,17 +44,38 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E0F174932EBE2F2E006A0416 /* Cloudinary in Frameworks */,
+				7EF5D1938AD40000318D0EC9 /* Pods_Staffly.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		73259D84508C9DA68734254C /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				FDA6BE72BAB8BFF4E1E98684 /* Pods_Staffly.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		91CB394BC914CDB25C7441CF /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				43C283E1A03AFB6E6B404879 /* Pods-Staffly.debug.xcconfig */,
+				7B8B56258C5126A84BDE17AE /* Pods-Staffly.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
 		E0F174692EBE2ED8006A0416 = {
 			isa = PBXGroup;
 			children = (
 				E0F174742EBE2ED8006A0416 /* Staffly */,
 				E0F174732EBE2ED8006A0416 /* Products */,
+				91CB394BC914CDB25C7441CF /* Pods */,
+				73259D84508C9DA68734254C /* Frameworks */,
 			);
 			sourceTree = "<group>";
 		};
@@ -65,9 +94,11 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = E0F174852EBE2ED9006A0416 /* Build configuration list for PBXNativeTarget "Staffly" */;
 			buildPhases = (
+				0526446CF34DBFF7638EA6EB /* [CP] Check Pods Manifest.lock */,
 				E0F1746E2EBE2ED8006A0416 /* Sources */,
 				E0F1746F2EBE2ED8006A0416 /* Frameworks */,
 				E0F174702EBE2ED8006A0416 /* Resources */,
+				765807FF075E188032939EFC /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -78,6 +109,7 @@
 			);
 			name = Staffly;
 			packageProductDependencies = (
+				E0F174922EBE2F2E006A0416 /* Cloudinary */,
 			);
 			productName = Staffly;
 			productReference = E0F174722EBE2ED8006A0416 /* Staffly.app */;
@@ -107,6 +139,9 @@
 			);
 			mainGroup = E0F174692EBE2ED8006A0416;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				E0F174912EBE2F2E006A0416 /* XCRemoteSwiftPackageReference "cloudinary_ios" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = E0F174732EBE2ED8006A0416 /* Products */;
 			projectDirPath = "";
@@ -127,6 +162,52 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		0526446CF34DBFF7638EA6EB /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-Staffly-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		765807FF075E188032939EFC /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Staffly/Pods-Staffly-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			inputPaths = (
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Staffly/Pods-Staffly-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Staffly/Pods-Staffly-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		E0F1746E2EBE2ED8006A0416 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -140,6 +221,7 @@
 /* Begin XCBuildConfiguration section */
 		E0F174862EBE2ED9006A0416 /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 43C283E1A03AFB6E6B404879 /* Pods-Staffly.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -151,8 +233,8 @@
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -161,6 +243,10 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "s-kir.Staffly";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -172,6 +258,7 @@
 		};
 		E0F174872EBE2ED9006A0416 /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReference = 7B8B56258C5126A84BDE17AE /* Pods-Staffly.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -183,8 +270,8 @@
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -193,6 +280,10 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "s-kir.Staffly";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -240,7 +331,7 @@
 				DEVELOPMENT_TEAM = VS8XY62R74;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -304,7 +395,7 @@
 				DEVELOPMENT_TEAM = VS8XY62R74;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
-				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				GCC_NO_COMMON_BLOCKS = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
@@ -345,6 +436,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		E0F174912EBE2F2E006A0416 /* XCRemoteSwiftPackageReference "cloudinary_ios" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/cloudinary/cloudinary_ios.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.2.3;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		E0F174922EBE2F2E006A0416 /* Cloudinary */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = E0F174912EBE2F2E006A0416 /* XCRemoteSwiftPackageReference "cloudinary_ios" */;
+			productName = Cloudinary;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = E0F1746A2EBE2ED8006A0416 /* Project object */;
 }

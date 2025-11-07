@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>API_KEY</key>
+	<string>AIzaSyAx6O49obzhkhs-NjbbvtwKL_YQRS7E_s8</string>
+	<key>GCM_SENDER_ID</key>
+	<string>290385975167</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>s-kir.Staffly</string>
+	<key>PROJECT_ID</key>
+	<string>sepbill-bd1ce</string>
+	<key>STORAGE_BUCKET</key>
+	<string>sepbill-bd1ce.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false></false>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false></false>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true></true>
+	<key>IS_GCM_ENABLED</key>
+	<true></true>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true></true>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:290385975167:ios:681577287d36915ae26c4a</string>
+	<key>DATABASE_URL</key>
+	<string>https://sepbill-bd1ce-default-rtdb.firebaseio.com</string>
+</dict>
+</plist>
