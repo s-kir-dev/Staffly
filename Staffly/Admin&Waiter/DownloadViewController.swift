@@ -16,27 +16,40 @@ class DownloadViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         
-        let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-        let cafeID = UserDefaults.standard.string(forKey: "cafeID") ?? "cafeID1"
-        role = UserDefaults.standard.string(forKey: "role") ?? "Worker"
-        
-        UserDefaults.standard.set(true, forKey: "flag")
-        
         showLoadingAlert()
         
+        let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
+        let cafeID = UserDefaults.standard.string(forKey: "cafeID") ?? "cafeID1"
         let selfID = UserDefaults.standard.string(forKey: "selfID") ?? ""
+        role = UserDefaults.standard.string(forKey: "role") ?? "Worker"
+        UserDefaults.standard.set(true, forKey: "flag")
         
-        downloadData(cafeID, completion: { products in
+        let group = DispatchGroup()
+        var imageCache: [String: UIImage] = [:]
+        
+        group.enter()
+        downloadData(cafeID) { products in
             menu = products
-            
-            let categoriesRef = db.child("Places").child(cafeID).child("categories")
-            categoriesRef.observeSingleEvent(of: .value) { snapshot in
-                if let value = snapshot.value as? [String: Any],
-                   let existingCategories = value["categories"] as? [String] {
-                    categories = existingCategories
-                }
+            group.leave()
+        }
+        
+        group.enter()
+        let categoriesRef = db.child("Places").child(cafeID).child("categories")
+        categoriesRef.observeSingleEvent(of: .value) { snapshot in
+            if let value = snapshot.value as? [String: Any],
+               let existingCategories = value["categories"] as? [String] {
+                categories = existingCategories
             }
-            
+            group.leave()
+        }
+        
+        group.enter()
+        downloadUserData(cafeID, selfID) { employeeData in
+            employee = employeeData
+            group.leave()
+        }
+        
+        group.notify(queue: .global(qos: .userInitiated)) {
             let currentImageNames = menu.map { "\($0.id).png" }
             let allFiles = try? FileManager.default.contentsOfDirectory(atPath: documentsURL.path)
             
@@ -47,16 +60,15 @@ class DownloadViewController: UIViewController {
                 }
             }
             
-            var imageCache: [String: UIImage] = [:]
-            let group = DispatchGroup()
+            let imageGroup = DispatchGroup()
             
             for product in menu {
-                group.enter()
+                imageGroup.enter()
                 let imageName = "\(product.id).png"
                 
                 if let localImage = downloadLocalImage(name: imageName) {
                     imageCache[product.id] = localImage
-                    group.leave()
+                    imageGroup.leave()
                 } else {
                     loadWithRetry(from: product.productImageURL.replacingOccurrences(of: "http://", with: "https://"), retries: 2) { image in
                         if let image = image {
@@ -67,18 +79,14 @@ class DownloadViewController: UIViewController {
                             imageCache[product.id] = UIImage(named: "блюдо")
                             debugPrint("❌ Не удалось загрузить картинку для \(product.productName)")
                         }
-                        group.leave()
+                        imageGroup.leave()
                     }
                 }
             }
             
-            group.notify(queue: .main) {
-                
+            imageGroup.notify(queue: .main) {
                 tables = loadTables()
-                debugPrint("Загружено столов: \(tables.count)")
-                
-                menu.sort(by: {$0.menuNumber < $1.menuNumber})
-                
+                menu.sort(by: { $0.menuNumber < $1.menuNumber })
                 globalImageCache = imageCache
                 debugPrint("✅ Загружено \(menu.count) продуктов, \(globalImageCache.count) изображений. Должность: \(self.role)")
                 
@@ -93,7 +101,7 @@ class DownloadViewController: UIViewController {
                     }
                 }
             }
-        })
+        }
     }
     
     func showLoadingAlert() {

@@ -223,6 +223,7 @@ class MenuViewController: UIViewController {
             UIAction(title: category) { _ in
                 self.selectedCategory = category
                 self.products = self.allProducts.filter { $0.productCategory == category }
+                self.tableView.setContentOffset(CGPoint(x: 0, y: 0), animated: true)
                 self.filterMenuButton.setTitle(" \(category)", for: .normal)
                 UIView.transition(with: self.tableView, duration: 0.25, options: .transitionCrossDissolve) {
                     self.tableView.reloadData()
@@ -233,6 +234,7 @@ class MenuViewController: UIViewController {
         let resetAction = UIAction(title: " Все категории", attributes: .destructive) { _ in
             self.selectedCategory = ""
             self.products = self.allProducts
+            self.tableView.setContentOffset(CGPoint(x: 0, y: 0), animated: true)
             self.filterMenuButton.setTitle(" Все категории", for: .normal)
             UIView.transition(with: self.tableView, duration: 0.25, options: .transitionCrossDissolve) {
                 self.tableView.reloadData()

@@ -245,10 +245,14 @@ class BillViewController: UIViewController {
         group.notify(queue: .main) {
             let selfID = UserDefaults.standard.string(forKey: "selfID")!
             let cafeID = UserDefaults.standard.string(forKey: "cafeID")!
+            
+            let tips = self.finalTableBill - self.table.bill
+            employee.tips += tips.roundValue()
+            employee.tablesCount += 1
+            employee.cafeProfit += self.table.bill
 
             downloadUserData(cafeID, selfID) { currentEmployee in
                 var updatedEmployee = currentEmployee
-                let tips = self.finalTableBill - self.table.bill
                 updatedEmployee.tips += tips.roundValue()
                 updatedEmployee.tablesCount += 1
                 updatedEmployee.cafeProfit += self.table.bill

@@ -44,11 +44,7 @@ class ProfileViewController: UIViewController {
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        downloadUserData(cafeID, selfID, completion: {
-            employeeData in
-            employee = employeeData
-            self.setupUI()
-        })
+        self.setupUI()
     }
     
     @objc func signOutButtonTapped() {
@@ -126,13 +122,13 @@ class ProfileViewController: UIViewController {
             workersButton.isHidden = false
             cafeIDLabel.isHidden = false
             summaTipsLabel.isHidden = false
-            summaTipsLabel.text = "Сумма чаевых: \(employee.tips)р."
+            summaTipsLabel.text = "Сумма чаевых: \(employee.tips.roundValue())р."
         case "Waiter":
             roleString = "Официант"
             workersButton.isHidden = true
             inviteCodesButton.isHidden = true
             cafeIDLabel.isHidden = true
-            summaTipsLabel.text = "Сумма чаевых: \(employee.tips)р."
+            summaTipsLabel.text = "Сумма чаевых: \(employee.tips.roundValue())р."
         case "Cook":
             roleString = "Повар"
             workersButton.isHidden = true

@@ -302,7 +302,7 @@ func downloadUserData(_ cafeID: String, _ selfID: String, completion: @escaping 
             password: password,
             role: role,
             tablesCount: tablesCount,
-            tips: tips,
+            tips: tips.roundValue(),
             productsCount: productsCount,
             cafeProfit: cafeProfit
         )
@@ -316,7 +316,7 @@ func uploadUserData(_ cafeID: String, _ selfID: String, _ employee: Employee, co
         "productsCount": employee.productsCount,
         "cafeProfit": employee.cafeProfit,
         "tablesCount": employee.tablesCount,
-        "tips": employee.tips
+        "tips": employee.tips.roundValue()
     ]) { error, _ in
         completion(error)
     }
