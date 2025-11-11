@@ -100,7 +100,7 @@ struct Product: Codable {
     let menuNumber: Int
     let productCategory: String
     let productDescription: String
-    let productImageURL: String
+    var productImageURL: String
     let productName: String
     let productPrice: Double
     var additionWishes: String

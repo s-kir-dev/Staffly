@@ -27,6 +27,8 @@ class EditableMenuViewController: UIViewController {
 
     let cloudinary = CloudinaryManager.shared
     let refreshControl = UIRefreshControl()
+    
+    var selectedProduct: Product = Product(id: "", menuNumber: 0, productCategory: "", productDescription: "", productImageURL: "", productName: "", productPrice: 0.0, additionWishes: "")
 
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -155,6 +157,12 @@ class EditableMenuViewController: UIViewController {
         filterMenuButton.showsMenuAsPrimaryAction = true
         filterMenuButton.setTitle(" Все категории", for: .normal)
     }
+    
+    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
+        if let vc = segue.destination as? EditProductViewController {
+            vc.product = selectedProduct
+        }
+    }
 }
 
 extension EditableMenuViewController: UITableViewDelegate, UITableViewDataSource {
@@ -224,9 +232,20 @@ extension EditableMenuViewController: UITableViewDelegate, UITableViewDataSource
                 }
             }
         }
+        
+        let editProductAction = UIContextualAction(style: .normal, title: "Изменить") { _, _, completionHandler in
+            self.selectedProduct = product
+            self.performSegue(withIdentifier: "editProductVC", sender: self)
+            completionHandler(true)
+        }
+        
         deleteAction.backgroundColor = .red
         deleteAction.image = UIImage(systemName: "trash.fill")
-        return UISwipeActionsConfiguration(actions: [deleteAction])
+        
+        editProductAction.backgroundColor = .blue.withAlphaComponent(0.3)
+        editProductAction.image = UIImage(systemName: "pencil.circle")
+        
+        return UISwipeActionsConfiguration(actions: [deleteAction, editProductAction])
     }
 }
 
