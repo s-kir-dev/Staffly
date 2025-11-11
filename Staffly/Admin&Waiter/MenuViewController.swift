@@ -59,10 +59,6 @@ class MenuViewController: UIViewController {
         searchController.searchBar.placeholder = "Введите название блюда"
         searchController.searchResultsUpdater = self
         searchController.delegate = self
-    }
-
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
         
         switch currentClient {
         case 1:
