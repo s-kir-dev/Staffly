@@ -158,6 +158,7 @@ struct Table: Codable, Equatable {
 var tables: [Table] = []
 
 struct Employee {
+    var id: String
     var name: String
     var surname: String
     var email: String
@@ -169,7 +170,7 @@ struct Employee {
     var cafeProfit: Double
 }
 
-var employee: Employee = Employee(name: "", surname: "", email: "", password: "", role: "", tablesCount: 0, tips: 0, productsCount: 0, cafeProfit: 0) // Я
+var employee: Employee = Employee(id: "", name: "", surname: "", email: "", password: "", role: "", tablesCount: 0, tips: 0, productsCount: 0, cafeProfit: 0) // Я
 
 // MARK : - FirebaseDatabase
 
@@ -279,12 +280,13 @@ func orderProducts(_ products: [Product], _ cafeID: String, _ tableNumber: Int, 
 }
 
 func downloadUserData(_ cafeID: String, _ selfID: String, completion: @escaping (Employee) -> Void) {
-    db.child("Places").child(cafeID).child("employees").child(selfID).observeSingleEvent(of: .value) { snapshot in
+    db.child("Places").child(cafeID).child("employees").child(selfID).observeSingleEvent(of: .value) { snapshot, _ in
         guard let data = snapshot.value as? [String: Any] else {
-            completion(Employee(name: "", surname: "", email: "", password: "", role: "", tablesCount: 0, tips: 0.0, productsCount: 0, cafeProfit: 0.0))
+            completion(Employee(id: "", name: "", surname: "", email: "", password: "", role: "", tablesCount: 0, tips: 0.0, productsCount: 0, cafeProfit: 0.0))
             return
         }
-
+        
+        let id = data["id"] as? String ?? ""
         let name = data["name"] as? String ?? ""
         let surname = data["surname"] as? String ?? ""
         let role = data["role"] as? String ?? ""
@@ -294,8 +296,9 @@ func downloadUserData(_ cafeID: String, _ selfID: String, completion: @escaping 
         let cafeProfit = data["cafeProfit"] as? Double ?? 0.0
         let tablesCount = data["tablesCount"] as? Int ?? 0
         let tips = data["tips"] as? Double ?? 0.0
-
+        
         let employee = Employee(
+            id: id,
             name: name,
             surname: surname,
             email: email,
@@ -306,7 +309,7 @@ func downloadUserData(_ cafeID: String, _ selfID: String, completion: @escaping 
             productsCount: productsCount,
             cafeProfit: cafeProfit
         )
-
+        
         completion(employee)
     }
 }
