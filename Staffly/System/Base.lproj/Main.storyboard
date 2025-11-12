@@ -181,10 +181,10 @@
             </objects>
             <point key="canvasLocation" x="3608.3969465648852" y="103.52112676056339"/>
         </scene>
-        <!--Tab Bar Controller-->
+        <!--Main Tab Bar Controller-->
         <scene sceneID="cVB-Je-8Ij">
             <objects>
-                <tabBarController automaticallyAdjustsScrollViewInsets="NO" id="8AU-B9-B2Y" sceneMemberID="viewController">
+                <tabBarController automaticallyAdjustsScrollViewInsets="NO" id="8AU-B9-B2Y" customClass="MainTabBarController" customModule="Staffly" customModuleProvider="target" sceneMemberID="viewController">
                     <toolbarItems/>
                     <tabBar key="tabBar" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" id="I4M-6z-9w1">
                         <rect key="frame" x="0.0" y="0.0" width="1000" height="1000"/>
@@ -2513,10 +2513,10 @@
             </objects>
             <point key="canvasLocation" x="3607" y="-2620"/>
         </scene>
-        <!--Tab Bar Controller-->
+        <!--Main Tab Bar Controller-->
         <scene sceneID="QvL-S3-g8Q">
             <objects>
-                <tabBarController automaticallyAdjustsScrollViewInsets="NO" id="7SA-ZX-N9N" sceneMemberID="viewController">
+                <tabBarController automaticallyAdjustsScrollViewInsets="NO" id="7SA-ZX-N9N" customClass="MainTabBarController" customModule="Staffly" customModuleProvider="target" sceneMemberID="viewController">
                     <toolbarItems/>
                     <tabBar key="tabBar" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" id="PhN-rZ-0XR">
                         <rect key="frame" x="0.0" y="0.0" width="1000" height="1000"/>
@@ -3337,11 +3337,11 @@
         </scene>
     </scenes>
     <inferredMetricsTieBreakers>
-        <segue reference="Ptn-3q-zkQ"/>
-        <segue reference="9v7-7H-KzT"/>
+        <segue reference="0vd-Ad-902"/>
+        <segue reference="Thx-RW-GaR"/>
         <segue reference="NQT-T3-pgq"/>
-        <segue reference="JBd-Dk-cEi"/>
-        <segue reference="bS0-Yg-M4b"/>
+        <segue reference="oZ6-WR-9L7"/>
+        <segue reference="V9E-0O-ycI"/>
         <segue reference="ZFm-NM-ZJm"/>
     </inferredMetricsTieBreakers>
     <resources>
