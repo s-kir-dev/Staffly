@@ -135,13 +135,13 @@ extension InviteCodesViewController: UITableViewDelegate, UITableViewDataSource 
         
         cell.codeImage.image = UIImage(named: "\(inviteCode.role.lowercased())Icon")
         
-        cell.codeLabel.text = inviteCode.code.capitalized
-        cell.cafeIDLabel.text = cafeID
+        cell.codeLabel.text = "Код: \(inviteCode.code)"
+        cell.cafeIDLabel.text = "ID заведения: \(cafeID)"
         
         switch inviteCode.role {
-        case "Admin": cell.roleLabel.text = "Админ"
-        case "Cook": cell.roleLabel.text = "Повар"
-        case "Waiter": cell.roleLabel.text = "Официант"
+        case "Admin": cell.roleLabel.text = "Должность: Админ"
+        case "Cook": cell.roleLabel.text = "Должность: Повар"
+        case "Waiter": cell.roleLabel.text = "Должность: Официант"
         default: break
         }
         
