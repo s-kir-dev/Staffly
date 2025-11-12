@@ -65,8 +65,11 @@ class DownloadViewController: UIViewController {
             for product in menu {
                 imageGroup.enter()
                 let imageName = "\(product.id).png"
+                //let localPath = documentsURL.appendingPathComponent(imageName)
                 
-                if let localImage = downloadLocalImage(name: imageName) {
+                if let localImage = downloadLocalImage(name: imageName),
+                   let savedUrl = UserDefaults.standard.string(forKey: "\(product.id)_imageUrl"),
+                   savedUrl == product.productImageURL {
                     imageCache[product.id] = localImage
                     imageGroup.leave()
                 } else {
@@ -74,10 +77,11 @@ class DownloadViewController: UIViewController {
                         if let image = image {
                             imageCache[product.id] = image
                             saveImageLocally(image: image, name: imageName)
-                            debugPrint("✅ Картинка \(product.productName) загружена")
+                            UserDefaults.standard.set(product.productImageURL, forKey: "\(product.id)_imageUrl")
+                            debugPrint("♻️ Обновлено изображение для \(product.productName)")
                         } else {
                             imageCache[product.id] = UIImage(named: "блюдо")
-                            debugPrint("❌ Не удалось загрузить картинку для \(product.productName)")
+                            debugPrint("❌ Не удалось загрузить изображение для \(product.productName)")
                         }
                         imageGroup.leave()
                     }

@@ -39,7 +39,6 @@ class EditableMenuViewController: UIViewController {
         tableView.delegate = self
         tableView.dataSource = self
 
-        // Настройка pull-to-refresh
         refreshControl.tintColor = .blue
         refreshControl.addTarget(self, action: #selector(refreshMenu), for: .valueChanged)
         tableView.refreshControl = refreshControl
@@ -52,12 +51,6 @@ class EditableMenuViewController: UIViewController {
         searchController.searchResultsUpdater = self
         searchController.delegate = self
         
-        //setupMenuButton() //
-    }
-
-    override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-//        setupMenuButton()
     }
 
     @objc func refreshMenu() {
@@ -76,7 +69,6 @@ class EditableMenuViewController: UIViewController {
                     categories = []
                 }
 
-                // Удаляем старые картинки, которых нет в меню
                 let currentImageNames = menu.map { "\($0.id).png" }
                 let allFiles = try? FileManager.default.contentsOfDirectory(atPath: self.documentsURL.path)
                 allFiles?.forEach { file in
@@ -85,21 +77,28 @@ class EditableMenuViewController: UIViewController {
                     }
                 }
 
-                // Загружаем картинки
                 var imageCache: [String: UIImage] = [:]
                 let group = DispatchGroup()
 
                 for product in menu {
                     group.enter()
                     let imageName = "\(product.id).png"
-                    if let localImage = downloadLocalImage(name: imageName) {
+
+                    if let localImage = downloadLocalImage(name: imageName),
+                       let savedUrl = UserDefaults.standard.string(forKey: "\(product.id)_imageUrl"),
+                       savedUrl == product.productImageURL {
                         imageCache[product.id] = localImage
                         group.leave()
                     } else {
                         loadWithRetry(from: product.productImageURL.replacingOccurrences(of: "http://", with: "https://"), retries: 2) { image in
-                            imageCache[product.id] = image ?? UIImage(named: "блюдо")
                             if let image = image {
+                                imageCache[product.id] = image
                                 saveImageLocally(image: image, name: imageName)
+                                UserDefaults.standard.set(product.productImageURL, forKey: "\(product.id)_imageUrl")
+                                debugPrint("♻️ Обновлено изображение для \(product.productName)")
+                            } else {
+                                imageCache[product.id] = UIImage(named: "блюдо")
+                                debugPrint("❌ Не удалось загрузить изображение для \(product.productName)")
                             }
                             group.leave()
                         }
@@ -109,21 +108,22 @@ class EditableMenuViewController: UIViewController {
                 group.notify(queue: .main) {
                     menu.sort { $0.menuNumber < $1.menuNumber }
                     self.allProducts = menu
-                    self.products = menu
-                    globalImageCache = imageCache
+                    self.products = self.selectedCategory.isEmpty
+                        ? menu
+                        : menu.filter { $0.productCategory == self.selectedCategory }
 
-                    // Обновляем кнопку категорий
+                    globalImageCache = imageCache
                     self.setupMenuButton()
 
-                    // Анимированное обновление таблицы
                     UIView.transition(with: self.tableView, duration: 0.25, options: .transitionCrossDissolve) {
                         self.tableView.reloadData()
                     }
 
-                    // Завершаем pull-to-refresh, если нужно
                     if isRefreshing {
                         self.refreshControl.endRefreshing()
                     }
+
+                    debugPrint("✅ Меню обновлено через свайп — \(menu.count) продуктов, \(globalImageCache.count) изображений")
                 }
             }
         }

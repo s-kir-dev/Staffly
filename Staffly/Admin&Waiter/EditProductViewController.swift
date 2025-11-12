@@ -166,13 +166,14 @@ class EditProductViewController: UIViewController {
             return
         }
         
-        cloudinary.uploadImage(imageData, publicId: product.id) { result in
+        let newUrl = "\(UUID().uuidString)"
+        
+        cloudinary.uploadImage(imageData, publicId: newUrl) { result in
             switch result {
             case .success(let imageUrl):
                 DispatchQueue.main.async {
-                    let newUrl = imageUrl + "?v=\(UUID().uuidString)"
                     if let index = menu.firstIndex(where: { $0.id == self.product.id }) {
-                        menu[index].productImageURL = newUrl
+                        menu[index].productImageURL = imageUrl
                     }
                     globalImageCache[self.product.id] = self.productImageView.image
                     self.imageChanged = false
@@ -183,7 +184,7 @@ class EditProductViewController: UIViewController {
                         debugPrint("♻️ Обновлено локальное изображение: \(imageName)")
                     }
 
-                    updateProductInDatabase(imageUrl: newUrl)
+                    updateProductInDatabase(imageUrl: imageUrl)
                 }
             case .failure(let error):
                 DispatchQueue.main.async {
