@@ -66,8 +66,6 @@ class DownloadViewController: UIViewController {
             }
             
             group.notify(queue: .global(qos: .userInitiated)) {
-                // Сначала загружаем аватарку пользователя
-                // Сначала загружаем аватарку пользователя
                 let profileImageName = selfID
                 if downloadLocalImage(name: profileImageName) == nil {
                     if let imageUrlString = !employee.profileImageURL.isEmpty ? employee.profileImageURL : UserDefaults.standard.string(forKey: "profileImageURL"),
@@ -85,7 +83,6 @@ class DownloadViewController: UIViewController {
                     }
                 }
                 
-                // Очистка старых изображений продуктов
                 let currentImageNames = menu.map { "\($0.id).png" }
                 let allFiles = try? FileManager.default.contentsOfDirectory(atPath: documentsURL.path)
                 allFiles?.forEach { file in
