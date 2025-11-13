@@ -65,7 +65,6 @@ class DownloadViewController: UIViewController {
             for product in menu {
                 imageGroup.enter()
                 let imageName = "\(product.id).png"
-                //let localPath = documentsURL.appendingPathComponent(imageName)
                 
                 if let localImage = downloadLocalImage(name: imageName),
                    let savedUrl = UserDefaults.standard.string(forKey: "\(product.id)_imageUrl"),

@@ -17,16 +17,18 @@ class OrdersViewController: UIViewController {
     var orders: [Product] = []
     var orderKeys: [String] = []
     
+    private var ordersRef: DatabaseReference!
+    private var alert: UIAlertController?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
         tableView.delegate = self
         tableView.dataSource = self
+        ordersRef = db.child("Places").child(cafeID).child("orders")
         observeOrders()
     }
     
     func observeOrders() {
-        let ordersRef = db.child("Places").child(cafeID).child("orders")
-        
         ordersRef.observe(.value) { snapshot in
             var newOrders: [Product] = []
             var keys: [String] = []
@@ -66,6 +68,26 @@ class OrdersViewController: UIViewController {
             }
         }
     }
+    
+    func showLoadingAlert() {
+        alert = UIAlertController(title: nil, message: "Обработка...", preferredStyle: .alert)
+        let loadingIndicator = UIActivityIndicatorView(style: .medium)
+        
+        loadingIndicator.translatesAutoresizingMaskIntoConstraints = false
+        loadingIndicator.startAnimating()
+        
+        alert?.view.addSubview(loadingIndicator)
+        
+        NSLayoutConstraint.activate([
+            loadingIndicator.centerXAnchor.constraint(equalTo: alert!.view.centerXAnchor),
+            loadingIndicator.topAnchor.constraint(equalTo: alert!.view.topAnchor, constant: 55)
+        ])
+        present(alert!, animated: true, completion: nil)
+    }
+    
+    func hideLoadingAlert() {
+        alert?.dismiss(animated: true, completion: nil)
+    }
 }
 
 extension OrdersViewController: UITableViewDelegate, UITableViewDataSource {
@@ -97,35 +119,41 @@ extension OrdersViewController: UITableViewDelegate, UITableViewDataSource {
         let product = orders[indexPath.row]
         
         let deleteAction = UIContextualAction(style: .destructive, title: "Готово") { _, _, completionHandler in
-            let ordersRef = db.child("Places").child(self.cafeID).child("orders")
+            self.showLoadingAlert()
+            self.ordersRef.removeAllObservers()
             
-            ordersRef.observeSingleEvent(of: .value) { snapshot in
+            self.ordersRef.observeSingleEvent(of: .value) { snapshot in
                 for case let tableSnapshot as DataSnapshot in snapshot.children {
                     let tableNumber = tableSnapshot.key
                     if tableSnapshot.hasChild(key) {
-                        let orderRef = ordersRef.child(tableNumber).child(key)
+                        let orderRef = self.ordersRef.child(tableNumber).child(key)
                         let readyRef = db.child("Places").child(self.cafeID).child("readyOrders").child(tableNumber).child(key)
                         
                         orderRef.observeSingleEvent(of: .value) { orderSnap in
                             guard let value = orderSnap.value as? [String: Any] else {
+                                self.hideLoadingAlert()
                                 completionHandler(false)
+                                self.observeOrders()
                                 return
                             }
                             
                             readyRef.setValue(value) { error, _ in
                                 guard error == nil else {
+                                    self.hideLoadingAlert()
                                     completionHandler(false)
+                                    self.observeOrders()
                                     return
                                 }
                                 
                                 orderRef.removeValue { error, _ in
                                     guard error == nil else {
+                                        self.hideLoadingAlert()
                                         completionHandler(false)
+                                        self.observeOrders()
                                         return
                                     }
                                     
-                                    downloadUserData(self.cafeID, self.selfID, completion: {
-                                        employeeData in
+                                    downloadUserData(self.cafeID, self.selfID) { employeeData in
                                         employee = employeeData
                                         employee.productsCount += 1
                                         employee.cafeProfit += product.productPrice
@@ -135,10 +163,12 @@ extension OrdersViewController: UITableViewDelegate, UITableViewDataSource {
                                                 self.orders.remove(at: indexPath.row)
                                                 self.orderKeys.remove(at: indexPath.row)
                                                 self.tableView.deleteRows(at: [indexPath], with: .fade)
+                                                self.hideLoadingAlert()
                                                 completionHandler(true)
+                                                self.observeOrders()
                                             }
                                         }
-                                    })
+                                    }
                                 }
                             }
                         }
