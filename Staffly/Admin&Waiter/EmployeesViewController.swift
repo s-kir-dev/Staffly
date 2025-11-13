@@ -16,6 +16,7 @@ class EmployeesViewController: UIViewController {
     var selectedEmployee = Employee(id: "", name: "", surname: "", email: "", password: "", role: "", tablesCount: 0, tips: 0.0, productsCount: 0, cafeProfit: 0.0)
     
     let loading = UIActivityIndicatorView(style: .large)
+    let cafeID = UserDefaults.standard.string(forKey: "cafeID")!
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -29,21 +30,21 @@ class EmployeesViewController: UIViewController {
         
         loading.hidesWhenStopped = true
         loading.center = view.center
+        view.addSubview(loading)
         loading.startAnimating()
         
-        let cafeID = UserDefaults.standard.object(forKey: "cafeID") as! String
-        downloadEmployeesData(cafeID: cafeID, completion: {
-            employeesData in
-            self.employees = employeesData
-            self.tableView.reloadData()
-            self.loading.stopAnimating()
-        })
+        downloadEmployeesData(cafeID: cafeID) { employeesData in
+            DispatchQueue.main.async {
+                self.employees = employeesData
+                self.tableView.reloadData()
+                self.loading.stopAnimating()
+            }
+        }
     }
     
     func downloadEmployeesData(cafeID: String, completion: @escaping ([Employee]) -> Void) {
         let dbRef = db.child("Places").child(cafeID).child("employees")
-        
-        dbRef.observeSingleEvent(of: .value, with: { snapshot in
+        dbRef.observeSingleEvent(of: .value) { snapshot in
             var employees: [Employee] = []
             
             for child in snapshot.children {
@@ -65,9 +66,8 @@ class EmployeesViewController: UIViewController {
                     employees.append(employee)
                 }
             }
-            
             completion(employees)
-        })
+        }
     }
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
@@ -76,13 +76,11 @@ class EmployeesViewController: UIViewController {
             destinationVC.selectedEmployee = selectedEmployee
         }
     }
-
 }
 
 extension EmployeesViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let employee = employees[indexPath.row]
-        selectedEmployee = employee
+        selectedEmployee = employees[indexPath.row]
         performSegue(withIdentifier: "statsVC", sender: self)
     }
     
@@ -116,5 +114,38 @@ extension EmployeesViewController: UITableViewDelegate, UITableViewDataSource {
         
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         return 130
+    }
+    
+    func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        let employeeToFire = employees[indexPath.row]
+
+        let deleteAction = UIContextualAction(style: .destructive, title: "Уволить сотрудника") { _, _, completionHandler in
+            self.loading.startAnimating()
+            let cafeID = UserDefaults.standard.string(forKey: "cafeID")!
+            
+            db.child("Places").child(cafeID).child("employees").child(employeeToFire.id).removeValue { error, _ in
+                guard error == nil else {
+                    DispatchQueue.main.async {
+                        self.loading.stopAnimating()
+                    }
+                    completionHandler(false)
+                    return
+                }
+                
+                self.downloadEmployeesData(cafeID: cafeID) { employeesData in
+                    DispatchQueue.main.async {
+                        self.employees = employeesData
+                        self.tableView.reloadData()
+                        self.loading.stopAnimating()
+                        completionHandler(true)
+                    }
+                }
+            }
+        }
+        
+        deleteAction.backgroundColor = .red
+        deleteAction.image = UIImage(systemName: "trash.fill")
+        
+        return UISwipeActionsConfiguration(actions: [deleteAction])
     }
 }

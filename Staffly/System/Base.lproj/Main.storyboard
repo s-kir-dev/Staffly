@@ -46,6 +46,7 @@
                         <segue destination="8AU-B9-B2Y" kind="presentation" identifier="AdminVC" modalPresentationStyle="fullScreen" id="3bX-JR-aFL"/>
                         <segue destination="WFb-0a-lkE" kind="presentation" identifier="CookVC" modalPresentationStyle="fullScreen" id="lSG-Zx-aww"/>
                         <segue destination="7SA-ZX-N9N" kind="presentation" identifier="WaiterVC" modalPresentationStyle="fullScreen" id="YCU-8d-gfx"/>
+                        <segue destination="rzk-Em-J1p" kind="presentation" identifier="wasFiredVC" modalPresentationStyle="fullScreen" id="OMg-fs-ifN"/>
                     </connections>
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="MIG-rt-Ek9" sceneMemberID="firstResponder"/>
@@ -3341,6 +3342,7 @@
         <segue reference="Thx-RW-GaR"/>
         <segue reference="NQT-T3-pgq"/>
         <segue reference="oZ6-WR-9L7"/>
+        <segue reference="OMg-fs-ifN"/>
         <segue reference="V9E-0O-ycI"/>
         <segue reference="ZFm-NM-ZJm"/>
     </inferredMetricsTieBreakers>
