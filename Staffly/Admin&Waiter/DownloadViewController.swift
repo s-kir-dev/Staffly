@@ -25,7 +25,7 @@ class DownloadViewController: UIViewController {
         role = UserDefaults.standard.string(forKey: "role") ?? "Worker"
         UserDefaults.standard.set(true, forKey: "flag")
         
-        db.child("Places").child(cafeID).child("employees").child(selfID).observeSingleEvent(of: .value) { snapshot in
+        db.child("Places").child(cafeID).child("employees").child(selfID).observeSingleEvent(of: .value, with: { snapshot in
             guard snapshot.exists() else {
                 DispatchQueue.main.async {
                     self.alert?.dismiss(animated: true) {
@@ -42,7 +42,6 @@ class DownloadViewController: UIViewController {
             }
             
             let group = DispatchGroup()
-            var imageCache: [String: UIImage] = [:]
             
             group.enter()
             downloadData(cafeID) { products in
@@ -67,17 +66,38 @@ class DownloadViewController: UIViewController {
             }
             
             group.notify(queue: .global(qos: .userInitiated)) {
+                // Сначала загружаем аватарку пользователя
+                // Сначала загружаем аватарку пользователя
+                let profileImageName = selfID
+                if downloadLocalImage(name: profileImageName) == nil {
+                    if let imageUrlString = !employee.profileImageURL.isEmpty ? employee.profileImageURL : UserDefaults.standard.string(forKey: "profileImageURL"),
+                       let url = URL(string: imageUrlString) {
+                        
+                        loadWithRetry(from: url.absoluteString, retries: 2) { image in
+                            if let image = image {
+                                saveImageLocally(image: image, name: profileImageName)
+                                debugPrint("✅ Аватарка профиля обновлена")
+                            } else if let placeholder = UIImage(systemName: "person.crop.circle") {
+                                saveImageLocally(image: placeholder, name: profileImageName)
+                                debugPrint("❌ Не удалось загрузить аватарку профиля")
+                            }
+                        }
+                    }
+                }
+                
+                // Очистка старых изображений продуктов
                 let currentImageNames = menu.map { "\($0.id).png" }
                 let allFiles = try? FileManager.default.contentsOfDirectory(atPath: documentsURL.path)
-                
                 allFiles?.forEach { file in
-                    if !currentImageNames.contains(file) && !file.contains(selfID) {
+                    if !currentImageNames.contains(file) && !file.contains(profileImageName) {
                         try? FileManager.default.removeItem(at: documentsURL.appendingPathComponent(file))
                         debugPrint("🗑 Удалено старое изображение: \(file)")
                     }
                 }
                 
+                // Загрузка изображений продуктов
                 let imageGroup = DispatchGroup()
+                var imageCache: [String: UIImage] = [:]
                 
                 for product in menu {
                     imageGroup.enter()
@@ -122,7 +142,7 @@ class DownloadViewController: UIViewController {
                     }
                 }
             }
-        }
+        })
     }
     
     func showLoadingAlert() {

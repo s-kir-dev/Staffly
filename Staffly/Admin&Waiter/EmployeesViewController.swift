@@ -13,7 +13,7 @@ class EmployeesViewController: UIViewController {
     @IBOutlet weak var tableView: UITableView!
     
     var employees: [Employee] = []
-    var selectedEmployee = Employee(id: "", name: "", surname: "", email: "", password: "", role: "", tablesCount: 0, tips: 0.0, productsCount: 0, cafeProfit: 0.0)
+    var selectedEmployee = Employee(id: "", name: "", surname: "", email: "", password: "", role: "", tablesCount: 0, tips: 0.0, productsCount: 0, cafeProfit: 0.0, profileImageURL: "")
     
     let loading = UIActivityIndicatorView(style: .large)
     let cafeID = UserDefaults.standard.string(forKey: "cafeID")!
@@ -61,7 +61,8 @@ class EmployeesViewController: UIViewController {
                         tablesCount: value["tablesCount"] as? Int ?? 0,
                         tips: (value["tips"] as? Double ?? 0.0).roundValue(),
                         productsCount: value["productsCount"] as? Int ?? 0,
-                        cafeProfit: value["cafeProfit"] as? Double ?? 0.0
+                        cafeProfit: value["cafeProfit"] as? Double ?? 0.0,
+                        profileImageURL: value["profileImageURL"] as? String ?? ""
                     )
                     employees.append(employee)
                 }

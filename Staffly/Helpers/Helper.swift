@@ -168,9 +168,10 @@ struct Employee {
     var tips: Double
     var productsCount: Int
     var cafeProfit: Double
+    var profileImageURL: String
 }
 
-var employee: Employee = Employee(id: "", name: "", surname: "", email: "", password: "", role: "", tablesCount: 0, tips: 0, productsCount: 0, cafeProfit: 0) // Я
+var employee: Employee = Employee(id: "", name: "", surname: "", email: "", password: "", role: "", tablesCount: 0, tips: 0, productsCount: 0, cafeProfit: 0, profileImageURL: "") // Я
 
 // MARK : - FirebaseDatabase
 
@@ -282,7 +283,7 @@ func orderProducts(_ products: [Product], _ cafeID: String, _ tableNumber: Int, 
 func downloadUserData(_ cafeID: String, _ selfID: String, completion: @escaping (Employee) -> Void) {
     db.child("Places").child(cafeID).child("employees").child(selfID).observeSingleEvent(of: .value) { snapshot, _ in
         guard let data = snapshot.value as? [String: Any] else {
-            completion(Employee(id: "", name: "", surname: "", email: "", password: "", role: "", tablesCount: 0, tips: 0.0, productsCount: 0, cafeProfit: 0.0))
+            completion(Employee(id: "", name: "", surname: "", email: "", password: "", role: "", tablesCount: 0, tips: 0.0, productsCount: 0, cafeProfit: 0.0, profileImageURL: ""))
             return
         }
         
@@ -296,6 +297,7 @@ func downloadUserData(_ cafeID: String, _ selfID: String, completion: @escaping 
         let cafeProfit = data["cafeProfit"] as? Double ?? 0.0
         let tablesCount = data["tablesCount"] as? Int ?? 0
         let tips = data["tips"] as? Double ?? 0.0
+        let profileImageURL = data["profileImageURL"] as? String ?? ""
         
         let employee = Employee(
             id: id,
@@ -307,7 +309,9 @@ func downloadUserData(_ cafeID: String, _ selfID: String, completion: @escaping 
             tablesCount: tablesCount,
             tips: tips.roundValue(),
             productsCount: productsCount,
-            cafeProfit: cafeProfit
+            cafeProfit: cafeProfit,
+            profileImageURL: profileImageURL
+            
         )
         
         completion(employee)
@@ -319,7 +323,8 @@ func uploadUserData(_ cafeID: String, _ selfID: String, _ employee: Employee, co
         "productsCount": employee.productsCount,
         "cafeProfit": employee.cafeProfit,
         "tablesCount": employee.tablesCount,
-        "tips": employee.tips.roundValue()
+        "tips": employee.tips.roundValue(),
+        "profileImageURL": employee.profileImageURL
     ]) { error, _ in
         completion(error)
     }
