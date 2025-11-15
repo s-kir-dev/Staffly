@@ -67,19 +67,25 @@ class DownloadViewController: UIViewController {
             
             group.notify(queue: .global(qos: .userInitiated)) {
                 let profileImageName = selfID
-                if downloadLocalImage(name: profileImageName) == nil {
-                    if let imageUrlString = !employee.profileImageURL.isEmpty ? employee.profileImageURL : UserDefaults.standard.string(forKey: "profileImageURL"),
-                       let url = URL(string: imageUrlString) {
-                        
-                        loadWithRetry(from: url.absoluteString, retries: 2) { image in
-                            if let image = image {
-                                saveImageLocally(image: image, name: profileImageName)
-                                debugPrint("✅ Аватарка профиля обновлена")
-                            } else if let placeholder = UIImage(systemName: "person.crop.circle") {
-                                saveImageLocally(image: placeholder, name: profileImageName)
-                                debugPrint("❌ Не удалось загрузить аватарку профиля")
-                            }
+
+                UserDefaults.standard.removeObject(forKey: "profileImageURL")
+
+                if let imageUrlString = !employee.profileImageURL.isEmpty ? employee.profileImageURL : nil,
+                   let url = URL(string: imageUrlString) {
+                    
+                    loadWithRetry(from: url.absoluteString, retries: 2) { image in
+                        if let image = image {
+                            saveImageLocally(image: image, name: profileImageName)
+                            debugPrint("✅ Профильная картинка обновлена")
+                        } else if let placeholder = UIImage(systemName: "person.crop.circle") {
+                            saveImageLocally(image: placeholder, name: profileImageName)
+                            debugPrint("❌ Не удалось загрузить аватарку профиля, поставлен placeholder")
                         }
+                    }
+                } else {
+                    if let placeholder = UIImage(systemName: "person.crop.circle") {
+                        saveImageLocally(image: placeholder, name: profileImageName)
+                        debugPrint("ℹ️ Профиль без картинки, установлен placeholder")
                     }
                 }
                 

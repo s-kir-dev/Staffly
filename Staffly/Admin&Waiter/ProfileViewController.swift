@@ -173,8 +173,10 @@ extension ProfileViewController: UIImagePickerControllerDelegate, UINavigationCo
             self.showAlert("Ошибка", "Не удалось подготовить изображение")
             return
         }
+
+        let newPublicId = UUID().uuidString
         
-        CloudinaryManager.shared.uploadImage(imageData, publicId: selfID) { result in
+        CloudinaryManager.shared.uploadImage(imageData, publicId: newPublicId) { result in
             DispatchQueue.main.async {
                 self.loading.stopAnimating()
                 switch result {
@@ -185,7 +187,7 @@ extension ProfileViewController: UIImagePickerControllerDelegate, UINavigationCo
                         if let error = error {
                             self.showAlert("Ошибка", "Не удалось обновить данные: \(error.localizedDescription)")
                         } else {
-                            self.showAlert("Готово", "Фото успешно загружено ✅")
+                            debugPrint("✅ Фото успешно загружено и обновлено с новым UUID")
                         }
                     }
                 case .failure(let error):
