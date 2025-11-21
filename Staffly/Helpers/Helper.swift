@@ -95,14 +95,14 @@ func loadWithRetry(from urlString: String, retries: Int, completion: @escaping (
 
 var categories: [String] = []
 
-struct Product: Codable {
+struct Product: Codable, Hashable {
     let id: String
     let menuNumber: Int
     let productCategory: String
     let productDescription: String
     var productImageURL: String
     let productName: String
-    let productPrice: Double
+    var productPrice: Double
     var additionWishes: String
 }
 
@@ -124,7 +124,7 @@ struct InviteCode {
     let role: String
 }
 
-struct SelectedProduct: Codable {
+struct SelectedProduct: Codable, Hashable {
     var product: Product
     var quantity: Int
 }
@@ -472,5 +472,11 @@ extension Double {
     func roundValue(toPlaces places: Int = 2) -> Double {
         let multiplier = pow(10.0, Double(places))
         return (self * multiplier).rounded() / multiplier
+    }
+}
+
+extension Array where Element == SelectedProduct {
+    var sum: Double {
+        reduce(0) { $0 + (Double($1.product.productPrice) * Double($1.quantity)) }
     }
 }
