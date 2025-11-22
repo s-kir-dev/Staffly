@@ -1,6 +1,6 @@
 //
 //  DownloadViewController.swift
-//  SepBill
+//  Staffly
 //
 //  Created by Kirill Sysoev on 15.10.2025.
 //

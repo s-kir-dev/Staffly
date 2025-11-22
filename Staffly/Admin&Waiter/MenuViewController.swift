@@ -1,6 +1,6 @@
 //
 //  MenuViewController.swift
-//  SepBill
+//  Staffly
 //
 //  Created by Kirill Sysoev on 15.10.2025.
 //
@@ -18,9 +18,9 @@ class MenuViewController: UIViewController {
     
     var tableIndex: Int = 0
     var currentClient: Int = 0
-    var selectedProducts: [SelectedProduct] = []
-    var sharedDishes: [String: [Int]] = [:]          // product.id -> [clientIndexes]
-    var orderedProducts: [Product] = []              // each element = одна физическая порция, которая уйдёт в заказ
+    var selectedProducts: [SelectedProduct] = [] // служит только для отображения цвета ячейки с ранее выбранным блюдом
+    var sharedDishes: [String: [Int]] = [:] // для проверки делится блюдо с другими клиентами или нет product.id -> [clientIndexes]
+    var orderedProducts: [Product] = [] // отвечает за switch.isOn в ячейке таблицы и хранит в себе выбранные в этот раз блюда для заказа
     var summa: Double = 0
     var summaSelectedProducts: Double = 0
     var tappedProduct: Product = Product(id: "", menuNumber: 0, productCategory: "", productDescription: "", productImageURL: "", productName: "", productPrice: 0, additionWishes: "")

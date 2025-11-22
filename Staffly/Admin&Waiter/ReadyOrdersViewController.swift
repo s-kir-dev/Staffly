@@ -1,6 +1,6 @@
 //
 //  ReadyOrdersViewController.swift
-//  SepBill
+//  Staffly
 //
 //  Created by Kirill Sysoev on 31.10.2025.
 //

@@ -1,6 +1,6 @@
 //
 //  Notes.swift
-//  SepBill
+//  Staffly
 //
 //  Created by Kirill Sysoev on 17.10.2025.
 //

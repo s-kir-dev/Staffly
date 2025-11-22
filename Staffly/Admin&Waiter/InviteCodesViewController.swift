@@ -1,6 +1,6 @@
 //
 //  InviteCodesViewController.swift
-//  SepBill
+//  Staffly
 //
 //  Created by Kirill Sysoev on 20.10.2025.
 //

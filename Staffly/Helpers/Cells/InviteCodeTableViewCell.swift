@@ -1,6 +1,6 @@
 //
 //  InviteCodeTableViewCell.swift
-//  SepBill
+//  Staffly
 //
 //  Created by Kirill Sysoev on 25.10.2025.
 //

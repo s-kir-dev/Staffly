@@ -1,6 +1,6 @@
 //
 //  GeneralSignInViewController.swift
-//  SepBill
+//  Staffly
 //
 //  Created by Kirill Sysoev on 19.10.2025.
 //
