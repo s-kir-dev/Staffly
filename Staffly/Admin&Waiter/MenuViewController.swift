@@ -9,22 +9,22 @@ import UIKit
 import FirebaseDatabase
 
 class MenuViewController: UIViewController {
-    
+
     @IBOutlet weak var tableView: UITableView!
     @IBOutlet weak var filterMenuButton: UIButton!
     @IBOutlet weak var summaLabel: UILabel!
-    
+
     var selectedCategory: String = ""
-    
+
     var tableIndex: Int = 0
     var currentClient: Int = 0
     var selectedProducts: [SelectedProduct] = [] // служит только для отображения цвета ячейки с ранее выбранным блюдом
-    var sharedDishes: [String: [Int]] = [:] // для проверки делится блюдо с другими клиентами или нет product.id -> [clientIndexes]
+    var sharedDishes: [String: [Int]] = [:] // product.id -> [clientIndexes]
     var orderedProducts: [Product] = [] // отвечает за switch.isOn в ячейке таблицы и хранит в себе выбранные в этот раз блюда для заказа
     var summa: Double = 0
     var summaSelectedProducts: Double = 0
     var tappedProduct: Product = Product(id: "", menuNumber: 0, productCategory: "", productDescription: "", productImageURL: "", productName: "", productPrice: 0, additionWishes: "")
-    
+
     let searchController = UISearchController(searchResultsController: nil)
     let loading = UIActivityIndicatorView(style: .large)
     let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
@@ -34,32 +34,32 @@ class MenuViewController: UIViewController {
     var cafeID = UserDefaults.standard.string(forKey: "cafeID") ?? ""
     let selfID = UserDefaults.standard.string(forKey: "selfID") ?? ""
     let role = UserDefaults.standard.string(forKey: "role") ?? ""
-    
+
     let cloudinary = CloudinaryManager.shared
     let refreshControl = UIRefreshControl()
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        
+
         summaSelectedProducts = selectedProducts.reduce(0) { $0 + (Double($1.product.productPrice) * Double($1.quantity)) }.roundValue()
         summaLabel.text = "\(summaSelectedProducts.roundValue())р."
-        
+
         products = allProducts
         tableView.delegate = self
         tableView.dataSource = self
-        
+
         refreshControl.tintColor = .blue
         refreshControl.addTarget(self, action: #selector(refreshMenu), for: .valueChanged)
         tableView.refreshControl = refreshControl
-        
+
         setupMenuButton()
-        
+
         navigationItem.searchController = searchController
         navigationItem.hidesSearchBarWhenScrolling = false
         searchController.searchBar.placeholder = "Введите название блюда"
         searchController.searchResultsUpdater = self
         searchController.delegate = self
-        
+
         switch currentClient {
         case 1:
             selectedProducts = tables[tableIndex].selectedProducts1
@@ -82,10 +82,10 @@ class MenuViewController: UIViewController {
         default:
             break
         }
-        
+
         summaSelectedProducts = selectedProducts.reduce(0) { $0 + (Double($1.product.productPrice) * Double($1.quantity)) }.roundValue()
         summaLabel.text = "\(summaSelectedProducts.roundValue())р."
-        
+
         debugPrint("📥 MenuVC открыт | Стол \(tableIndex) | Клиент \(currentClient)")
         debugPrint("📦 Старые блюда 1: \(tables[tableIndex].selectedProducts1.map { "\($0.product.productName) x\($0.quantity)" })")
         debugPrint("📦 Старые блюда 2: \(tables[tableIndex].selectedProducts2.map { "\($0.product.productName) x\($0.quantity)" })")
@@ -94,7 +94,25 @@ class MenuViewController: UIViewController {
         debugPrint("📦 Старые блюда 5: \(tables[tableIndex].selectedProducts5.map { "\($0.product.productName) x\($0.quantity)" })")
         debugPrint("📦 Старые блюда 6: \(tables[tableIndex].selectedProducts6.map { "\($0.product.productName) x\($0.quantity)" })")
     }
-    
+
+    // MARK: - Helpers for matching by id + sharedWith
+
+    /// Сравнивает массивы клиентов как множества — порядок не важен
+    func sameClients(_ a: [Int], _ b: [Int]) -> Bool {
+        return Set(a) == Set(b)
+    }
+
+    /// Находит индекс в selectedProducts по id блюда и набору клиентов (sharedWith).
+    func indexInSelectedProducts(productId: String, sharedWith: [Int]) -> Int? {
+        return selectedProducts.firstIndex { $0.product.id == productId && sameClients($0.sharedWith, sharedWith) }
+    }
+
+    /// Утилита для поиска в произвольном массиве SelectedProduct
+    func indexIn(_ arr: [SelectedProduct], productId: String, sharedWith: [Int]) -> Int? {
+        return arr.firstIndex { $0.product.id == productId && sameClients($0.sharedWith, sharedWith) }
+    }
+
+    // MARK: - Save on leave
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
         guard self.isMovingFromParent else { return }
@@ -116,49 +134,50 @@ class MenuViewController: UIViewController {
                 for clientIndex in clients {
                     var productCopy = product
                     productCopy.productPrice = pricePerClient
+                    let sw = clients
 
                     switch clientIndex {
                     case 1:
                         table.client1Bill += productCopy.productPrice
-                        if let idx = table.selectedProducts1.firstIndex(where: { $0.product.id == productCopy.id }) {
+                        if let idx = indexIn(table.selectedProducts1, productId: productCopy.id, sharedWith: sw) {
                             table.selectedProducts1[idx].quantity += 1
                         } else {
-                            table.selectedProducts1.append(SelectedProduct(product: productCopy, quantity: 1))
+                            table.selectedProducts1.append(SelectedProduct(product: productCopy, sharedWith: sw, quantity: 1))
                         }
                     case 2:
                         table.client2Bill += productCopy.productPrice
-                        if let idx = table.selectedProducts2.firstIndex(where: { $0.product.id == productCopy.id }) {
+                        if let idx = indexIn(table.selectedProducts2, productId: productCopy.id, sharedWith: sw) {
                             table.selectedProducts2[idx].quantity += 1
                         } else {
-                            table.selectedProducts2.append(SelectedProduct(product: productCopy, quantity: 1))
+                            table.selectedProducts2.append(SelectedProduct(product: productCopy, sharedWith: sw, quantity: 1))
                         }
                     case 3:
                         table.client3Bill += productCopy.productPrice
-                        if let idx = table.selectedProducts3.firstIndex(where: { $0.product.id == productCopy.id }) {
+                        if let idx = indexIn(table.selectedProducts3, productId: productCopy.id, sharedWith: sw) {
                             table.selectedProducts3[idx].quantity += 1
                         } else {
-                            table.selectedProducts3.append(SelectedProduct(product: productCopy, quantity: 1))
+                            table.selectedProducts3.append(SelectedProduct(product: productCopy, sharedWith: sw, quantity: 1))
                         }
                     case 4:
                         table.client4Bill += productCopy.productPrice
-                        if let idx = table.selectedProducts4.firstIndex(where: { $0.product.id == productCopy.id }) {
+                        if let idx = indexIn(table.selectedProducts4, productId: productCopy.id, sharedWith: sw) {
                             table.selectedProducts4[idx].quantity += 1
                         } else {
-                            table.selectedProducts4.append(SelectedProduct(product: productCopy, quantity: 1))
+                            table.selectedProducts4.append(SelectedProduct(product: productCopy, sharedWith: sw, quantity: 1))
                         }
                     case 5:
                         table.client5Bill += productCopy.productPrice
-                        if let idx = table.selectedProducts5.firstIndex(where: { $0.product.id == productCopy.id }) {
+                        if let idx = indexIn(table.selectedProducts5, productId: productCopy.id, sharedWith: sw) {
                             table.selectedProducts5[idx].quantity += 1
                         } else {
-                            table.selectedProducts5.append(SelectedProduct(product: productCopy, quantity: 1))
+                            table.selectedProducts5.append(SelectedProduct(product: productCopy, sharedWith: sw, quantity: 1))
                         }
                     case 6:
                         table.client6Bill += productCopy.productPrice
-                        if let idx = table.selectedProducts6.firstIndex(where: { $0.product.id == productCopy.id }) {
+                        if let idx = indexIn(table.selectedProducts6, productId: productCopy.id, sharedWith: sw) {
                             table.selectedProducts6[idx].quantity += 1
                         } else {
-                            table.selectedProducts6.append(SelectedProduct(product: productCopy, quantity: 1))
+                            table.selectedProducts6.append(SelectedProduct(product: productCopy, sharedWith: sw, quantity: 1))
                         }
                     default:
                         break
@@ -172,48 +191,55 @@ class MenuViewController: UIViewController {
                 sharedDishes.removeValue(forKey: product.id)
 
             } else {
+                // не шарится
                 switch currentClient {
                 case 1:
                     table.client1Bill += product.productPrice
-                    if let idx = table.selectedProducts1.firstIndex(where: { $0.product.id == product.id }) {
+                    let sw = sharedDishes[product.id] ?? [1]
+                    if let idx = indexIn(table.selectedProducts1, productId: product.id, sharedWith: sw) {
                         table.selectedProducts1[idx].quantity += 1
                     } else {
-                        table.selectedProducts1.append(SelectedProduct(product: product, quantity: 1))
+                        table.selectedProducts1.append(SelectedProduct(product: product, sharedWith: sw, quantity: 1))
                     }
                 case 2:
                     table.client2Bill += product.productPrice
-                    if let idx = table.selectedProducts2.firstIndex(where: { $0.product.id == product.id }) {
+                    let sw = sharedDishes[product.id] ?? [2]
+                    if let idx = indexIn(table.selectedProducts2, productId: product.id, sharedWith: sw) {
                         table.selectedProducts2[idx].quantity += 1
                     } else {
-                        table.selectedProducts2.append(SelectedProduct(product: product, quantity: 1))
+                        table.selectedProducts2.append(SelectedProduct(product: product, sharedWith: sw, quantity: 1))
                     }
                 case 3:
                     table.client3Bill += product.productPrice
-                    if let idx = table.selectedProducts3.firstIndex(where: { $0.product.id == product.id }) {
+                    let sw = sharedDishes[product.id] ?? [3]
+                    if let idx = indexIn(table.selectedProducts3, productId: product.id, sharedWith: sw) {
                         table.selectedProducts3[idx].quantity += 1
                     } else {
-                        table.selectedProducts3.append(SelectedProduct(product: product, quantity: 1))
+                        table.selectedProducts3.append(SelectedProduct(product: product, sharedWith: sw, quantity: 1))
                     }
                 case 4:
                     table.client4Bill += product.productPrice
-                    if let idx = table.selectedProducts4.firstIndex(where: { $0.product.id == product.id }) {
+                    let sw = sharedDishes[product.id] ?? [4]
+                    if let idx = indexIn(table.selectedProducts4, productId: product.id, sharedWith: sw) {
                         table.selectedProducts4[idx].quantity += 1
                     } else {
-                        table.selectedProducts4.append(SelectedProduct(product: product, quantity: 1))
+                        table.selectedProducts4.append(SelectedProduct(product: product, sharedWith: sw, quantity: 1))
                     }
                 case 5:
                     table.client5Bill += product.productPrice
-                    if let idx = table.selectedProducts5.firstIndex(where: { $0.product.id == product.id }) {
+                    let sw = sharedDishes[product.id] ?? [5]
+                    if let idx = indexIn(table.selectedProducts5, productId: product.id, sharedWith: sw) {
                         table.selectedProducts5[idx].quantity += 1
                     } else {
-                        table.selectedProducts5.append(SelectedProduct(product: product, quantity: 1))
+                        table.selectedProducts5.append(SelectedProduct(product: product, sharedWith: sw, quantity: 1))
                     }
                 case 6:
                     table.client6Bill += product.productPrice
-                    if let idx = table.selectedProducts6.firstIndex(where: { $0.product.id == product.id }) {
+                    let sw = sharedDishes[product.id] ?? [6]
+                    if let idx = indexIn(table.selectedProducts6, productId: product.id, sharedWith: sw) {
                         table.selectedProducts6[idx].quantity += 1
                     } else {
-                        table.selectedProducts6.append(SelectedProduct(product: product, quantity: 1))
+                        table.selectedProducts6.append(SelectedProduct(product: product, sharedWith: sw, quantity: 1))
                     }
                 default:
                     break
@@ -250,7 +276,7 @@ class MenuViewController: UIViewController {
             debugPrint("📤 Нет новых физических порций для отправки (productsToSend пуст).")
         }
     }
-    
+
     @objc func refreshMenu() {
         updateMenu(isRefreshing: true)
     }
@@ -261,7 +287,7 @@ class MenuViewController: UIViewController {
             let categoriesRef = db.child("Places").child(self.cafeID).child("categories").child("categories")
             categoriesRef.observeSingleEvent(of: .value) { snapshot in
                 categories = snapshot.value as? [String] ?? []
-                
+
                 let currentImageNames = menu.map { "\($0.id).png" }
                 let allFiles = try? FileManager.default.contentsOfDirectory(atPath: self.documentsURL.path)
                 allFiles?.forEach { file in
@@ -269,14 +295,14 @@ class MenuViewController: UIViewController {
                         try? FileManager.default.removeItem(at: self.documentsURL.appendingPathComponent(file))
                     }
                 }
-                
+
                 var imageCache: [String: UIImage] = [:]
                 let group = DispatchGroup()
-                
+
                 for product in menu {
                     group.enter()
                     let imageName = "\(product.id).png"
-                    
+
                     if let localImage = downloadLocalImage(name: imageName),
                        let savedUrl = UserDefaults.standard.string(forKey: "\(product.id)_imageUrl"),
                        savedUrl == product.productImageURL {
@@ -295,18 +321,18 @@ class MenuViewController: UIViewController {
                         }
                     }
                 }
-                
+
                 group.notify(queue: .main) {
                     menu.sort { $0.menuNumber < $1.menuNumber }
                     self.allProducts = menu
                     self.products = self.selectedCategory.isEmpty ? menu : menu.filter { $0.productCategory == self.selectedCategory }
                     globalImageCache = imageCache
                     self.setupMenuButton()
-                    
+
                     UIView.transition(with: self.tableView, duration: 0.25, options: .transitionCrossDissolve) {
                         self.tableView.reloadData()
                     }
-                    
+
                     if isRefreshing { self.refreshControl.endRefreshing() }
                     debugPrint("🔄 Обновление меню | Всего блюд: \(menu.count)")
                 }
@@ -350,18 +376,20 @@ class MenuViewController: UIViewController {
 
 // MARK: - TableView Delegate & DataSource
 extension MenuViewController: UITableViewDelegate, UITableViewDataSource {
-    func addProductToCurrentClient(_ product: Product, qty: Int = 1) {
-        if let idx = selectedProducts.firstIndex(where: { $0.product.id == product.id }) {
+
+    // Обновлённые add/remove с sharedWith
+    func addProductToCurrentClient(_ product: Product, qty: Int = 1, sharedWith: [Int]) {
+        if let idx = indexInSelectedProducts(productId: product.id, sharedWith: sharedWith) {
             selectedProducts[idx].quantity += qty
         } else {
-            selectedProducts.append(SelectedProduct(product: product, quantity: qty))
+            selectedProducts.append(SelectedProduct(product: product, sharedWith: sharedWith, quantity: qty))
         }
         summaSelectedProducts += (Double(product.productPrice) * Double(qty)).roundValue()
         summaLabel.text = "\(summaSelectedProducts.roundValue())р."
     }
-    
-    func removeProductFromCurrentClient(_ product: Product, qty: Int = 1) {
-        if let idx = selectedProducts.firstIndex(where: { $0.product.id == product.id }) {
+
+    func removeProductFromCurrentClient(_ product: Product, qty: Int = 1, sharedWith: [Int]) {
+        if let idx = indexInSelectedProducts(productId: product.id, sharedWith: sharedWith) {
             if selectedProducts[idx].quantity > qty {
                 selectedProducts[idx].quantity -= qty
             } else {
@@ -370,9 +398,11 @@ extension MenuViewController: UITableViewDelegate, UITableViewDataSource {
             summaSelectedProducts -= (Double(product.productPrice) * Double(qty)).roundValue()
             if summaSelectedProducts < 0 { summaSelectedProducts = 0 }
             summaLabel.text = "\(summaSelectedProducts.roundValue())р."
+        } else {
+            debugPrint("⚠️ Попытка удалить несуществующий SelectedProduct: id=\(product.id) sharedWith=\(sharedWith)")
         }
     }
-    
+
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return products.count
     }
@@ -390,7 +420,9 @@ extension MenuViewController: UITableViewDelegate, UITableViewDataSource {
         cell.productNameLabel.text = product.productName
         cell.productPriceLabel.text = "\(product.productPrice.roundValue())р."
 
-        if self.selectedProducts.contains(where: { $0.product.id == product.id }) {
+        // Подсветка — ищем элемент с тем же sharedWith (если нет — считаем, что sharedWith = [currentClient])
+        let currentShared = sharedDishes[product.id] ?? [currentClient]
+        if self.selectedProducts.contains(where: { $0.product.id == product.id && sameClients($0.sharedWith, currentShared) }) {
             cell.backgroundColor = UIColor(red: 0.796, green: 0.874, blue: 0.811, alpha: 0.5)
         } else {
             cell.backgroundColor = .white
@@ -398,39 +430,38 @@ extension MenuViewController: UITableViewDelegate, UITableViewDataSource {
 
         cell.switchAction = {
             if cell.productSwitch.isOn {
+                // включили
                 self.orderedProducts.append(product)
-                
-                if let clients = self.sharedDishes[product.id], !clients.isEmpty {
+
+                let clients = self.sharedDishes[product.id] ?? [self.currentClient]
+                if !clients.isEmpty && clients.contains(self.currentClient) {
                     let pricePerClient = (product.productPrice / Double(clients.count)).roundValue()
-                    if clients.contains(self.currentClient) {
-                        var productCopy = product
-                        productCopy.productPrice = pricePerClient
-                        self.addProductToCurrentClient(productCopy, qty: 1)
-                    } else {
-                    }
+                    var productCopy = product
+                    productCopy.productPrice = pricePerClient
+                    self.addProductToCurrentClient(productCopy, qty: 1, sharedWith: clients)
                 } else {
-                    self.addProductToCurrentClient(product, qty: 1)
+                    // не шарится или не для этого клиента
+                    self.addProductToCurrentClient(product, qty: 1, sharedWith: [self.currentClient])
                 }
                 cell.backgroundColor = UIColor(red: 0.796, green: 0.874, blue: 0.811, alpha: 1)
             } else {
+                // выключили
                 if let idx = self.orderedProducts.firstIndex(where: { $0.id == product.id }) {
                     self.orderedProducts.remove(at: idx)
                 }
-                
-                if let clients = self.sharedDishes[product.id], !clients.isEmpty {
-                    if clients.contains(self.currentClient) {
-                        let pricePerClient = (product.productPrice / Double(clients.count)).roundValue()
-                        var productCopy = product
-                        productCopy.productPrice = pricePerClient
-                        self.removeProductFromCurrentClient(productCopy, qty: 1)
-                    } else {
-                        
-                    }
+
+                let clients = self.sharedDishes[product.id] ?? [self.currentClient]
+                if !clients.isEmpty && clients.contains(self.currentClient) {
+                    let pricePerClient = (product.productPrice / Double(clients.count)).roundValue()
+                    var productCopy = product
+                    productCopy.productPrice = pricePerClient
+                    self.removeProductFromCurrentClient(productCopy, qty: 1, sharedWith: clients)
                 } else {
-                    self.removeProductFromCurrentClient(product, qty: 1)
+                    self.removeProductFromCurrentClient(product, qty: 1, sharedWith: [self.currentClient])
                 }
-                
-                if self.selectedProducts.contains(where: { $0.product.id == product.id }) {
+
+                // восстановим полупрозрачную подсветку, если было ранее выбрано в другом сеансе
+                if self.selectedProducts.contains(where: { $0.product.id == product.id && self.sameClients($0.sharedWith, self.sharedDishes[product.id] ?? [self.currentClient]) }) {
                     cell.backgroundColor = UIColor(red: 0.796, green: 0.874, blue: 0.811, alpha: 0.5)
                 } else {
                     cell.backgroundColor = .white
@@ -442,13 +473,13 @@ extension MenuViewController: UITableViewDelegate, UITableViewDataSource {
         cell.selectionStyle = .none
         return cell
     }
-    
+
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         // MARK: - Дополнительные пожелания
         let additionWishes = UIContextualAction(style: .normal, title: "Доп пожелания") { (_, _, completionHandler) in
-            
+
             let product = self.products[indexPath.row]
-            
+
             let alert = UIAlertController(title: "Доп пожелания",
                                           message: "Введите доп пожелания клиента к блюду",
                                           preferredStyle: .alert)
@@ -456,10 +487,10 @@ extension MenuViewController: UITableViewDelegate, UITableViewDataSource {
                 textField.placeholder = "Доп пожелания"
                 textField.text = product.additionWishes
             }
-            
+
             let saveAction = UIAlertAction(title: "Сохранить", style: .default) { _ in
                 guard let wishes = alert.textFields?.first?.text else { return }
-                
+
                 self.products[indexPath.row].additionWishes = wishes
                 if let allIndex = self.allProducts.firstIndex(where: { $0.id == product.id }) {
                     self.allProducts[allIndex].additionWishes = wishes
@@ -467,18 +498,18 @@ extension MenuViewController: UITableViewDelegate, UITableViewDataSource {
                 if let menuIndex = menu.firstIndex(where: { $0.id == product.id }) {
                     menu[menuIndex].additionWishes = wishes
                 }
-                if let selectedIndex = self.selectedProducts.firstIndex(where: { $0.product.id == product.id }) {
+                if let selectedIndex = self.selectedProducts.firstIndex(where: { $0.product.id == product.id && self.sameClients($0.sharedWith, self.sharedDishes[product.id] ?? [self.currentClient]) }) {
                     self.selectedProducts[selectedIndex].product.additionWishes = wishes
                     if let orderedIndex = self.orderedProducts.firstIndex(where: { $0.id == product.id }) {
                         self.orderedProducts[orderedIndex].additionWishes = wishes
                     }
                 }
             }
-            
+
             let cancelAction = UIAlertAction(title: "Отмена", style: .cancel)
             alert.addAction(saveAction)
             alert.addAction(cancelAction)
-            
+
             self.present(alert, animated: true)
             completionHandler(true)
         }
@@ -521,24 +552,27 @@ extension MenuViewController: UITableViewDelegate, UITableViewDataSource {
 
             let okAction = UIAlertAction(title: "Готово", style: .default) { _ in
                 let selectedClients = switches.enumerated().filter { $0.element.isOn }.map { $0.offset + 1 }
-                
+
                 if selectedClients.isEmpty {
                     self.sharedDishes.removeValue(forKey: product.id)
                 } else {
                     self.sharedDishes[product.id] = selectedClients
                 }
-                
-                self.orderedProducts.append(product)
-                
+
+                // Добавляем в orderedProducts (если ещё нет)
+                if !self.orderedProducts.contains(where: { $0.id == product.id }) {
+                    self.orderedProducts.append(product)
+                }
+
                 if selectedClients.contains(self.currentClient) {
                     let sharePrice = (product.productPrice / Double(selectedClients.count)).roundValue()
                     var productCopy = product
                     productCopy.productPrice = sharePrice
-                    self.addProductToCurrentClient(productCopy, qty: 1)
+                    self.addProductToCurrentClient(productCopy, qty: 1, sharedWith: selectedClients)
                 } else {
-
+                    // если текущий клиент не участвует — ничего не добавляем в выбранные этого клиента
                 }
-                
+
                 self.tableView.reloadRows(at: [indexPath], with: .automatic)
                 completionHandler(true)
             }

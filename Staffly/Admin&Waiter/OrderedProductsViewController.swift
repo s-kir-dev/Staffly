@@ -84,22 +84,22 @@ extension OrderedProductsViewController: UITableViewDelegate, UITableViewDataSou
         // Цвет фона в зависимости от клиента
         switch clientNumber {
         case 1:
-            cell.clientNumberLabel.text = "Заказывал клиент 1"
+            cell.clientNumberLabel.text = product.sharedWith.count > 1 ? "Разделено между клиентами \(product.sharedWith.map(\.description).joined(separator: ", "))" : "Заказывал клиент 1"
             cell.backgroundColor = UIColor(red: 173/255, green: 216/255, blue: 230/255, alpha: 1)
         case 2:
-            cell.clientNumberLabel.text = "Заказывал клиент 2"
+            cell.clientNumberLabel.text = product.sharedWith.count > 1 ? "Разделено между клиентами \(product.sharedWith.map(\.description).joined(separator: ", "))" : "Заказывал клиент 2"
             cell.backgroundColor = UIColor(red: 255/255, green: 182/255, blue: 193/255, alpha: 0.5)
         case 3:
-            cell.clientNumberLabel.text = "Заказывал клиент 3"
+            cell.clientNumberLabel.text = product.sharedWith.count > 1 ? "Разделено между клиентами \(product.sharedWith.map(\.description).joined(separator: ", "))" : "Заказывал клиент 3"
             cell.backgroundColor = UIColor(red: 144/255, green: 238/255, blue: 144/255, alpha: 0.7)
         case 4:
-            cell.clientNumberLabel.text = "Заказывал клиент 4"
+            cell.clientNumberLabel.text = product.sharedWith.count > 1 ? "Разделено между клиентами \(product.sharedWith.map(\.description).joined(separator: ", "))" : "Заказывал клиент 4"
             cell.backgroundColor = UIColor(red: 1, green: 1, blue: 224/255, alpha: 1)
         case 5:
-            cell.clientNumberLabel.text = "Заказывал клиент 5"
+            cell.clientNumberLabel.text = product.sharedWith.count > 1 ? "Разделено между клиентами \(product.sharedWith.map(\.description).joined(separator: ", "))" : "Заказывал клиент 5"
             cell.backgroundColor = UIColor(red: 224/255, green: 1, blue: 224/255, alpha: 1)
         case 6:
-            cell.clientNumberLabel.text = "Заказывал клиент 6"
+            cell.clientNumberLabel.text = product.sharedWith.count > 1 ? "Разделено между клиентами \(product.sharedWith.map(\.description).joined(separator: ", "))" : "Заказывал клиент 6"
             cell.backgroundColor = UIColor(red: 1, green: 224/255, blue: 1, alpha: 1)
         default:
             cell.backgroundColor = .white

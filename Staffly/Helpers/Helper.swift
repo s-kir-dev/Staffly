@@ -126,6 +126,7 @@ struct InviteCode {
 
 struct SelectedProduct: Codable, Hashable {
     var product: Product
+    var sharedWith: [Int]
     var quantity: Int
 }
 
