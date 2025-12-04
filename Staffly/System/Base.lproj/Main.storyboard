@@ -185,7 +185,7 @@
         <!--Main Tab Bar Controller-->
         <scene sceneID="cVB-Je-8Ij">
             <objects>
-                <tabBarController automaticallyAdjustsScrollViewInsets="NO" id="8AU-B9-B2Y" customClass="MainTabBarController" customModule="Staffly" customModuleProvider="target" sceneMemberID="viewController">
+                <tabBarController storyboardIdentifier="adminTBC" automaticallyAdjustsScrollViewInsets="NO" id="8AU-B9-B2Y" customClass="MainTabBarController" customModule="Staffly" customModuleProvider="target" sceneMemberID="viewController">
                     <toolbarItems/>
                     <tabBar key="tabBar" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" id="I4M-6z-9w1">
                         <rect key="frame" x="0.0" y="0.0" width="1000" height="1000"/>
@@ -2517,7 +2517,7 @@
         <!--Main Tab Bar Controller-->
         <scene sceneID="QvL-S3-g8Q">
             <objects>
-                <tabBarController automaticallyAdjustsScrollViewInsets="NO" id="7SA-ZX-N9N" customClass="MainTabBarController" customModule="Staffly" customModuleProvider="target" sceneMemberID="viewController">
+                <tabBarController storyboardIdentifier="waiterTBC" automaticallyAdjustsScrollViewInsets="NO" id="7SA-ZX-N9N" customClass="MainTabBarController" customModule="Staffly" customModuleProvider="target" sceneMemberID="viewController">
                     <toolbarItems/>
                     <tabBar key="tabBar" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" id="PhN-rZ-0XR">
                         <rect key="frame" x="0.0" y="0.0" width="1000" height="1000"/>
