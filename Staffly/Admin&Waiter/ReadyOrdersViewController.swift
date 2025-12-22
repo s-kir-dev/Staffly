@@ -181,7 +181,9 @@ extension ReadyOrdersViewController: UITableViewDelegate, UITableViewDataSource 
         
         deleteAction.backgroundColor = .red
         deleteAction.image = UIImage(systemName: "trash.fill")
-        return UISwipeActionsConfiguration(actions: [deleteAction])
+        let configuration = UISwipeActionsConfiguration(actions: [deleteAction])
+        configuration.performsFirstActionWithFullSwipe = false
+        return configuration
     }
 }
 
