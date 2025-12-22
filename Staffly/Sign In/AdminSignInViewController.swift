@@ -201,8 +201,10 @@ class AdminSignInViewController: UIViewController {
     func addDoneButtonKeyboard(_ view: UITextField) {
         let toolbar = UIToolbar()
         toolbar.sizeToFit()
-        
-        let doneButton = UIBarButtonItem(title: "Готово", style: UIBarButtonItem.Style.prominent, target: self, action: #selector(closeKeyboard))
+        var doneButton = UIBarButtonItem(title: "Готово", style: UIBarButtonItem.Style.plain, target: self, action: #selector(closeKeyboard))
+        if #available(iOS 26.0, *) {
+            doneButton = UIBarButtonItem(title: "Готово", style: UIBarButtonItem.Style.prominent, target: self, action: #selector(closeKeyboard))
+        } 
         toolbar.setItems([doneButton], animated: true)
         
         view.inputAccessoryView = toolbar
