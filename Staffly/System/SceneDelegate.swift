@@ -20,8 +20,6 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
             window.overrideUserInterfaceStyle = .light
             
             let storyboard = UIStoryboard(name: "Main", bundle: nil)
-            _ = storyboard.instantiateViewController(withIdentifier: "waiterTBC") as! MainTabBarController
-            _ = storyboard.instantiateViewController(withIdentifier: "adminTBC") as! MainTabBarController
             let onboardingVC = storyboard.instantiateViewController(withIdentifier: "onboardingVC")
             let downloadVC = storyboard.instantiateViewController(withIdentifier: "downloadVC") as! DownloadViewController
                     

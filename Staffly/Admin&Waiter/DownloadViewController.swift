@@ -139,8 +139,10 @@ class DownloadViewController: UIViewController {
                             self.performSegue(withIdentifier: "CookVC", sender: self)
                         case "Waiter":
                             self.performSegue(withIdentifier: "WaiterVC", sender: self)
-                        default:
+                        case "Admin":
                             self.performSegue(withIdentifier: "AdminVC", sender: self)
+                        default:
+                            self.performSegue(withIdentifier: "wasFiredVC", sender: self)
                         }
                     }
                 }
