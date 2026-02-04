@@ -599,13 +599,6 @@
                         <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="background1" translatesAutoresizingMaskIntoConstraints="NO" id="dfG-wX-eMt">
-                                <rect key="frame" x="0.0" y="584" width="393" height="268"/>
-                                <color key="backgroundColor" red="0.9399414062" green="0.63671875" blue="0.3061523438" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
-                                <constraints>
-                                    <constraint firstAttribute="height" constant="268" id="ANc-2K-hLb"/>
-                                </constraints>
-                            </imageView>
                             <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Введите E-Mail" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="PEH-Dm-faB">
                                 <rect key="frame" x="16" y="299" width="361" height="34"/>
                                 <constraints>
@@ -646,8 +639,16 @@
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                 <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
                             </textField>
+                            <textField opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Введите адрес заведения (Город, адрес)" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="0YG-FE-72Z">
+                                <rect key="frame" x="16" y="458" width="361" height="34"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="34" id="3eK-3Y-FJL"/>
+                                </constraints>
+                                <fontDescription key="fontDescription" type="system" pointSize="14"/>
+                                <textInputTraits key="textInputTraits" autocapitalizationType="sentences"/>
+                            </textField>
                             <textField hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Введите ID заведения" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="sky-5R-6mg">
-                                <rect key="frame" x="16" y="467" width="361" height="34"/>
+                                <rect key="frame" x="16" y="508" width="361" height="34"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="34" id="fgm-L1-fXR"/>
                                 </constraints>
@@ -655,7 +656,7 @@
                                 <textInputTraits key="textInputTraits" keyboardType="numberPad"/>
                             </textField>
                             <textField hidden="YES" opaque="NO" contentMode="scaleToFill" horizontalHuggingPriority="248" contentHorizontalAlignment="left" contentVerticalAlignment="center" borderStyle="roundedRect" placeholder="Введите пригласительный код администратора" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="lif-dg-mpp">
-                                <rect key="frame" x="16" y="526" width="361" height="34"/>
+                                <rect key="frame" x="16" y="567" width="361" height="34"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="34" id="Vnd-RS-nde"/>
                                     <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="34" id="kIw-In-9q7"/>
@@ -664,7 +665,7 @@
                                 <textInputTraits key="textInputTraits" keyboardType="numberPad"/>
                             </textField>
                             <button opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="uZ9-Qg-5h1">
-                                <rect key="frame" x="96.666666666666686" y="590" width="200" height="35"/>
+                                <rect key="frame" x="96.666666666666686" y="631" width="200" height="35"/>
                                 <color key="backgroundColor" red="0.9399414062" green="0.63671875" blue="0.3061523438" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
                                 <constraints>
                                     <constraint firstAttribute="height" constant="35" id="OJy-R3-BlW"/>
@@ -683,33 +684,34 @@
                             <constraint firstItem="ohc-Y4-HcO" firstAttribute="top" secondItem="xxT-dt-Rum" secondAttribute="top" constant="16" id="4qX-W6-p0n"/>
                             <constraint firstItem="uZ9-Qg-5h1" firstAttribute="top" secondItem="lif-dg-mpp" secondAttribute="bottom" constant="30" id="5nt-ff-Ya5"/>
                             <constraint firstItem="lif-dg-mpp" firstAttribute="leading" secondItem="xxT-dt-Rum" secondAttribute="leading" constant="16" id="6qn-Uj-58C"/>
+                            <constraint firstItem="0YG-FE-72Z" firstAttribute="leading" secondItem="xxT-dt-Rum" secondAttribute="leading" constant="16" id="9bm-ov-O84"/>
                             <constraint firstItem="xxT-dt-Rum" firstAttribute="trailing" secondItem="PEH-Dm-faB" secondAttribute="trailing" constant="16" id="BKz-zd-V81"/>
                             <constraint firstItem="lif-dg-mpp" firstAttribute="top" secondItem="sky-5R-6mg" secondAttribute="bottom" constant="25" id="BZT-x4-HPC"/>
                             <constraint firstItem="xxT-dt-Rum" firstAttribute="trailing" secondItem="rdJ-FH-vug" secondAttribute="trailing" constant="16" id="Bso-k3-O4r"/>
-                            <constraint firstItem="dfG-wX-eMt" firstAttribute="leading" secondItem="xxT-dt-Rum" secondAttribute="leading" id="Ezh-Fq-opD"/>
-                            <constraint firstAttribute="bottom" secondItem="dfG-wX-eMt" secondAttribute="bottom" id="IwX-LN-Woq"/>
                             <constraint firstItem="uZ9-Qg-5h1" firstAttribute="centerX" secondItem="8hq-da-CI7" secondAttribute="centerX" id="Jze-jH-oYV"/>
                             <constraint firstItem="WlG-Pb-h3J" firstAttribute="top" secondItem="PEH-Dm-faB" secondAttribute="bottom" constant="25" id="KPt-Wc-Ckd"/>
                             <constraint firstItem="iZz-kU-chE" firstAttribute="leading" secondItem="xxT-dt-Rum" secondAttribute="leading" constant="16" id="Kja-a9-8Yr"/>
-                            <constraint firstItem="sky-5R-6mg" firstAttribute="top" secondItem="iZz-kU-chE" secondAttribute="bottom" constant="25" id="MvM-JX-RND"/>
                             <constraint firstItem="WlG-Pb-h3J" firstAttribute="leading" secondItem="xxT-dt-Rum" secondAttribute="leading" constant="16" id="NgE-z2-dX1"/>
+                            <constraint firstItem="sky-5R-6mg" firstAttribute="top" secondItem="0YG-FE-72Z" secondAttribute="bottom" constant="16" id="UIR-Ud-N9W"/>
                             <constraint firstItem="xxT-dt-Rum" firstAttribute="trailing" secondItem="sky-5R-6mg" secondAttribute="trailing" constant="16" id="VhB-FM-Lsu"/>
                             <constraint firstItem="rdJ-FH-vug" firstAttribute="leading" secondItem="xxT-dt-Rum" secondAttribute="leading" constant="16" id="WJQ-uw-VEB"/>
                             <constraint firstItem="xxT-dt-Rum" firstAttribute="trailing" secondItem="lif-dg-mpp" secondAttribute="trailing" constant="16" id="WQv-Ut-FUE"/>
                             <constraint firstItem="PEH-Dm-faB" firstAttribute="leading" secondItem="xxT-dt-Rum" secondAttribute="leading" constant="16" id="Wi0-UH-cvD"/>
                             <constraint firstItem="xxT-dt-Rum" firstAttribute="trailing" secondItem="iZz-kU-chE" secondAttribute="trailing" constant="16" id="WxJ-fG-vhV"/>
+                            <constraint firstItem="0YG-FE-72Z" firstAttribute="top" secondItem="iZz-kU-chE" secondAttribute="bottom" constant="16" id="cSc-eG-pxr"/>
                             <constraint firstItem="xxT-dt-Rum" firstAttribute="trailing" secondItem="ohc-Y4-HcO" secondAttribute="trailing" constant="16" id="kLU-Q9-tQj"/>
                             <constraint firstItem="PEH-Dm-faB" firstAttribute="top" secondItem="rdJ-FH-vug" secondAttribute="bottom" constant="25" id="l9z-bx-W21"/>
                             <constraint firstItem="xxT-dt-Rum" firstAttribute="trailing" secondItem="WlG-Pb-h3J" secondAttribute="trailing" constant="16" id="oAP-8n-DAv"/>
+                            <constraint firstItem="xxT-dt-Rum" firstAttribute="trailing" secondItem="0YG-FE-72Z" secondAttribute="trailing" constant="16" id="qK7-Kn-Fzd"/>
                             <constraint firstItem="sky-5R-6mg" firstAttribute="leading" secondItem="xxT-dt-Rum" secondAttribute="leading" constant="16" id="uuD-Fi-bLu"/>
                             <constraint firstItem="rdJ-FH-vug" firstAttribute="top" secondItem="ohc-Y4-HcO" secondAttribute="bottom" constant="25" id="wSb-P2-dL2"/>
-                            <constraint firstItem="dfG-wX-eMt" firstAttribute="trailing" secondItem="xxT-dt-Rum" secondAttribute="trailing" id="yLh-Fc-DjU"/>
                             <constraint firstItem="ohc-Y4-HcO" firstAttribute="leading" secondItem="xxT-dt-Rum" secondAttribute="leading" constant="16" id="yoo-X6-uMZ"/>
                             <constraint firstItem="iZz-kU-chE" firstAttribute="top" secondItem="WlG-Pb-h3J" secondAttribute="bottom" constant="16" id="yp1-pJ-jmV"/>
                         </constraints>
                     </view>
                     <navigationItem key="navigationItem" title="Регистрация админа" largeTitleDisplayMode="always" id="yRt-2W-MSY"/>
                     <connections>
+                        <outlet property="addressTextField" destination="0YG-FE-72Z" id="uif-EQ-fFm"/>
                         <outlet property="cafeIDTextField" destination="sky-5R-6mg" id="4Gc-7V-a7w"/>
                         <outlet property="cafeNameAndAdressTextField" destination="iZz-kU-chE" id="RWl-Kj-dya"/>
                         <outlet property="emailTextField" destination="PEH-Dm-faB" id="SKp-9C-wTc"/>
@@ -3343,9 +3345,9 @@
         <segue reference="wnk-hz-muF"/>
         <segue reference="NQT-T3-pgq"/>
         <segue reference="oZ6-WR-9L7"/>
-        <segue reference="OMg-fs-ifN"/>
+        <segue reference="4Zg-v1-zjh"/>
         <segue reference="V9E-0O-ycI"/>
-        <segue reference="ZFm-NM-ZJm"/>
+        <segue reference="t4g-BW-Wp2"/>
     </inferredMetricsTieBreakers>
     <resources>
         <image name="BillImage" width="860" height="1136"/>

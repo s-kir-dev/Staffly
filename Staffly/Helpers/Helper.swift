@@ -396,16 +396,16 @@ func generateInviteCode(role: String, cafeID: String) -> String {
     return code
 }
 
-func generateCafeID(name: String, completion: @escaping (String) -> Void) {
+func generateCafeID(name: String, address: String, completion: @escaping (String) -> Void) {
     let cafeID = String(format: "%08d", Int.random(in: 0..<100_000_000))
     
     db.child("Places").child(cafeID).observeSingleEvent(of: .value) { snapshot in
         if snapshot.exists() {
             // Если ID уже занят, пробуем снова
-            generateCafeID(name: name, completion: completion)
+            generateCafeID(name: name, address: address, completion: completion)
         } else {
             // Создаём новое кафе
-            db.child("Places").child(cafeID).child("info").setValue(["name": name])
+            db.child("Places").child(cafeID).child("info").setValue(["name": name, "address": address])
             debugPrint("Создан CafeID для \(name): \(cafeID)")
             UserDefaults.standard.set(cafeID, forKey: "cafeID")
             

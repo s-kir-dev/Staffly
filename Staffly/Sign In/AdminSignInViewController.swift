@@ -15,6 +15,7 @@ class AdminSignInViewController: UIViewController {
     @IBOutlet weak var emailTextField: UITextField!
     @IBOutlet weak var passwordTextField: UITextField!
     @IBOutlet weak var cafeNameAndAdressTextField: UITextField!
+    @IBOutlet weak var addressTextField: UITextField!
     @IBOutlet weak var cafeIDTextField: UITextField!
     @IBOutlet weak var inviteCodeTextField: UITextField!
     @IBOutlet weak var signInButton: UIButton!
@@ -40,6 +41,7 @@ class AdminSignInViewController: UIViewController {
         emailTextField.delegate = self
         passwordTextField.delegate = self
         cafeNameAndAdressTextField.delegate = self
+        addressTextField.delegate = self
         cafeIDTextField.delegate = self
         inviteCodeTextField.delegate = self
         signInButton.addTarget(self, action: #selector(signInButtonTapped), for: .touchUpInside)
@@ -48,7 +50,7 @@ class AdminSignInViewController: UIViewController {
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         
-        let textFields: [UITextField] = [nameTextField, surnameTextField, emailTextField, passwordTextField, cafeNameAndAdressTextField, cafeIDTextField, inviteCodeTextField]
+        let textFields: [UITextField] = [nameTextField, surnameTextField, emailTextField, passwordTextField, cafeNameAndAdressTextField, addressTextField, cafeIDTextField, inviteCodeTextField]
         
         for textField in textFields {
             makeRounded(textField)
@@ -77,6 +79,10 @@ class AdminSignInViewController: UIViewController {
         }
         guard let cafeNameText = cafeNameAndAdressTextField.text, !cafeNameText.isEmpty else {
             showAlert("Ошибка", "Данные о полном названии заведения должны быть заполнены!")
+            return
+        }
+        guard let cafeAdressText = addressTextField.text, !cafeAdressText.isEmpty else {
+            showAlert("Ошибка", "Данные о адресе заведения должны быть заполнены!")
             return
         }
         
@@ -189,7 +195,7 @@ class AdminSignInViewController: UIViewController {
                 // Кафе не существует → создаем новое кафе и регистрируем админа
                 self.cafeIDTextField.isHidden = true
                 self.inviteCodeTextField.isHidden = true
-                generateCafeID(name: cafeNameText) { newCafeID in
+                generateCafeID(name: cafeNameText, address: cafeAdressText) { newCafeID in
                     print(generatePersonalID(newCafeID, nameText, surnameText, "Admin", email, password))
                     self.performSegue(withIdentifier: "AdminStartVC", sender: self)
                 }
