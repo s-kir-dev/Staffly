@@ -35,7 +35,7 @@ class GeneralSignInViewController: UIViewController {
     }
 
     @objc func signInButtonTapped() {
-        guard let name = cafeNameTextField.text, !name.isEmpty else {
+        guard let inputName = cafeNameTextField.text, !inputName.isEmpty else {
             showAlert("Ошибка", "Введите название заведения")
             return
         }
@@ -50,25 +50,31 @@ class GeneralSignInViewController: UIViewController {
 
         db.child("Places").observeSingleEvent(of: .value, with: { snapshot in
             var existingCafeID: String?
+            var exactCafeName: String? 
 
-            // ищем кафе по имени
+            // Ищем кафе по имени
             for child in snapshot.children {
                 if let snap = child as? DataSnapshot,
                    let info = snap.childSnapshot(forPath: "info").value as? [String: Any],
-                   let cafeName = info["name"] as? String,
-                   cafeName.lowercased().replacingOccurrences(of: " ", with: "") ==
-                   name.lowercased().replacingOccurrences(of: " ", with: "") {
-                    existingCafeID = snap.key
-                    break
+                   let nameFromDB = info["name"] as? String {
+                    
+                    let normalizedInput = inputName.lowercased().replacingOccurrences(of: " ", with: "")
+                    let normalizedDB = nameFromDB.lowercased().replacingOccurrences(of: " ", with: "")
+                    
+                    if normalizedInput == normalizedDB {
+                        existingCafeID = snap.key
+                        exactCafeName = nameFromDB // Сохраняем имя именно в том виде, в котором оно в БД
+                        break
+                    }
                 }
             }
 
-            guard let cafeID = existingCafeID else {
+            guard let cafeID = existingCafeID, let cafeName = exactCafeName else {
                 self.showAlert("Ошибка", "Кафе с таким названием не найдено")
                 return
             }
 
-            // ищем пользователя по email
+            // Ищем пользователя по email
             db.child("Places").child(cafeID).child("employees").observeSingleEvent(of: .value) { employeesSnap in
                 var foundUser: [String: Any]?
                 var foundID: String?
@@ -76,7 +82,7 @@ class GeneralSignInViewController: UIViewController {
                 for case let personalSnap as DataSnapshot in employeesSnap.children {
                     if let userData = personalSnap.value as? [String: Any],
                        let userEmail = userData["email"] as? String,
-                       userEmail == email {
+                       userEmail.lowercased() == email.lowercased() {
                         foundUser = userData
                         foundID = personalSnap.key
                         break
@@ -85,7 +91,7 @@ class GeneralSignInViewController: UIViewController {
                 
                 guard let user = foundUser,
                       let userPassword = user["password"] as? String else {
-                    self.showAlert("Ошибка", "Пользователь с таким email не найден в заведении \(self.cafeNameTextField.text ?? "")")
+                    self.showAlert("Ошибка", "Пользователь с таким email не найден в заведении \(cafeName)")
                     return
                 }
                 
@@ -94,7 +100,7 @@ class GeneralSignInViewController: UIViewController {
                     return
                 }
                 
-                // вход успешен
+                // Вход успешен
                 let userName = user["name"] as? String ?? ""
                 let userSurname = user["surname"] as? String ?? ""
                 let userRole = user["role"] as? String ?? "Worker"
@@ -102,12 +108,16 @@ class GeneralSignInViewController: UIViewController {
                 
                 saveToUserDefaults(userName, userSurname, cafeID, userID, userRole)
                 
-                debugPrint("✅ Вход выполнен для \(userName) \(userSurname) (\(userRole)) в кафе \(name)")
+                UserDefaults.standard.set(cafeName, forKey: "cafeName")
+                UserDefaults.standard.synchronize()
+                
+                debugPrint("✅ Вход выполнен для \(userName) \(userSurname) (\(userRole)) в кафе \(cafeName)")
                 
                 self.performSegue(withIdentifier: "SignedInVC", sender: self)
             }
         })
     }
+
     
     func showAlert(_ title: String, _ message: String) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)

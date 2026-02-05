@@ -84,10 +84,12 @@ class SignInViewController: UIViewController {
             return
         }
         
-        // 2️⃣ Проверяем, существует ли уже аккаунт с таким email
+        // 2️⃣ Проверяем, существует ли уже аккаунт с таким email и получаем данные о кафе
         db.child("Places").observeSingleEvent(of: .value) { snapshot in
             var emailExists = false
-            
+            var cafeNameFound: String?
+
+            // Проверка существования email по всей базе
             for placeChild in snapshot.children {
                 if let placeSnap = placeChild as? DataSnapshot {
                     if placeSnap.hasChild("employees") {
@@ -109,15 +111,22 @@ class SignInViewController: UIViewController {
                 self.showAlert("Внимание!", "Аккаунт с такой электронной почтой уже существует. Перейдите на экран входа.")
                 return
             }
+
+            // Получаем название конкретного кафе по ID
+            if let cafeSnap = snapshot.childSnapshot(forPath: cafeIDText).value as? [String: Any],
+               let info = cafeSnap["info"] as? [String: Any],
+               let name = info["name"] as? String {
+                cafeNameFound = name
+            }
             
-            // 3️⃣ Проверяем, есть ли такое кафе и код подходит ли
+            // 3️⃣ Проверяем пригласительный код
             let inviteRef = db.child("Places").child(cafeIDText).child("inviteCodes")
             
-            inviteRef.observeSingleEvent(of: .value) { snapshot in
+            inviteRef.observeSingleEvent(of: .value) { inviteSnapshot in
                 var codeFound = false
                 var roleForUser: String = "Worker"
 
-                for child in snapshot.children {
+                for child in inviteSnapshot.children {
                     if let snap = child as? DataSnapshot,
                        let data = snap.value as? [String: Any],
                        let code = data["code"] as? String,
@@ -134,8 +143,15 @@ class SignInViewController: UIViewController {
 
                 if codeFound {
                     UserDefaults.standard.set(cafeIDText, forKey: "cafeID")
+                    
+                    // Сохраняем название, если нашли его в базе
+                    if let finalCafeName = cafeNameFound {
+                        UserDefaults.standard.set(finalCafeName, forKey: "cafeName")
+                    }
+                    
                     let userID = generatePersonalID(cafeIDText, nameText, surnameText, roleForUser, email, password)
-                    debugPrint("Пользователь создан с ID: \(userID)")
+                    debugPrint("Пользователь создан с ID: \(userID) для кафе: \(cafeNameFound ?? "Unknown")")
+                    
                     self.performSegue(withIdentifier: "StartVC", sender: self)
                 } else {
                     self.showAlert("Ошибка", "ID заведения или пригласительный код введены неверно")
@@ -143,6 +159,7 @@ class SignInViewController: UIViewController {
             }
         }
     }
+
     
     @objc func adminButtonTapped() {
         performSegue(withIdentifier: "AdminSignIn", sender: self)

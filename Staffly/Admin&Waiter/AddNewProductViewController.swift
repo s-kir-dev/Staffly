@@ -152,7 +152,8 @@ class AddNewProductViewController: UIViewController {
                         "productImageURL": product.productImageURL,
                         "productName": product.productName,
                         "productPrice": product.productPrice,
-                        "additionWishes": product.additionWishes
+                        "additionWishes": product.additionWishes,
+                        "placeName": UserDefaults.standard.string(forKey: "cafeName") ?? "cafeName"
                     ]) { error, _ in
                         DispatchQueue.main.async {
                             alert.dismiss(animated: true)

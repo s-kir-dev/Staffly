@@ -408,6 +408,7 @@ func generateCafeID(name: String, address: String, completion: @escaping (String
             db.child("Places").child(cafeID).child("info").setValue(["name": name, "address": address])
             debugPrint("Создан CafeID для \(name): \(cafeID)")
             UserDefaults.standard.set(cafeID, forKey: "cafeID")
+            UserDefaults.standard.set(name, forKey: "cafeName")
             
             completion(cafeID)
         }

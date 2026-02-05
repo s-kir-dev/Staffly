@@ -86,7 +86,6 @@ class AdminSignInViewController: UIViewController {
             return
         }
         
-        // Проверяем, существует ли уже аккаунт с таким email
         db.child("Places").observeSingleEvent(of: .value) { snapshot in
             var emailExists = false
             
@@ -107,28 +106,29 @@ class AdminSignInViewController: UIViewController {
                 if emailExists { break }
             }
             
-            // Если email уже есть — показываем ошибку
             if emailExists {
                 self.showAlert("Внимание!", "Аккаунт с такой электронной почтой уже существует. Перейдите на экран входа.")
                 return
             }
             
-            // Ищем кафе с таким именем
             var existingCafeID: String?
+            var foundCafeName: String? // Переменная для хранения найденного имени
             
             for child in snapshot.children {
                 if let snap = child as? DataSnapshot,
                    let info = snap.childSnapshot(forPath: "info").value as? [String: Any],
-                   let cafeName = info["name"] as? String,
-                   cafeName.lowercased().replacingOccurrences(of: " ", with: "") == cafeNameText.lowercased().replacingOccurrences(of: " ", with: "") {
+                   let name = info["name"] as? String,
+                   name.lowercased().replacingOccurrences(of: " ", with: "") == cafeNameText.lowercased().replacingOccurrences(of: " ", with: "") {
+                    
                     existingCafeID = snap.key
+                    foundCafeName = name
                     break
                 }
             }
             
-            // кафе существует
             if let cafeID = existingCafeID {
-                db.child("Places").child(cafeID).child("employees").observeSingleEvent(of: .value) { snapshot in
+                // КЕЙС 1 и 2: Кафе существует
+                db.child("Places").child(cafeID).child("employees").observeSingleEvent(of: .value, with: { snapshot in
                     var hasAdmin = false
                     
                     for child in snapshot.children {
@@ -142,7 +142,7 @@ class AdminSignInViewController: UIViewController {
                     }
                     
                     if hasAdmin {
-                        // У кафе уже есть админ → требуем ID и пригласительный код
+                        // Требуем код
                         self.cafeIDTextField.isHidden = false
                         self.inviteCodeTextField.isHidden = false
                         
@@ -172,7 +172,6 @@ class AdminSignInViewController: UIViewController {
                                     
                                     codeValid = true
                                     roleForUser = roleData
-                                    
                                     inviteCodesRef.child(codeSnap.key).removeValue()
                                     break
                                 }
@@ -180,29 +179,36 @@ class AdminSignInViewController: UIViewController {
                             
                             if codeValid {
                                 debugPrint(generatePersonalID(cafeID, nameText, surnameText, roleForUser ?? "Worker", email, password))
+                                // Сохраняем имя
+                                UserDefaults.standard.set(foundCafeName ?? cafeNameText, forKey: "cafeName")
                                 self.performSegue(withIdentifier: "AdminStartVC", sender: self)
                             } else {
                                 self.showAlert("Ошибка", "Пригласительный код неверен")
                             }
                         }
                     } else {
-                        // Кафе есть, но админа нет → создаем админа
+                        // Кафе есть, админа нет
                         debugPrint(generatePersonalID(cafeID, nameText, surnameText, "Admin", email, password))
+                        // Сохраняем имя
+                        UserDefaults.standard.set(foundCafeName ?? cafeNameText, forKey: "cafeName")
                         self.performSegue(withIdentifier: "AdminStartVC", sender: self)
                     }
-                }
+                })
             } else {
-                // Кафе не существует → создаем новое кафе и регистрируем админа
+                // КЕЙС 3: Кафе не существует (создаем новое)
                 self.cafeIDTextField.isHidden = true
                 self.inviteCodeTextField.isHidden = true
+                
                 generateCafeID(name: cafeNameText, address: cafeAdressText) { newCafeID in
                     print(generatePersonalID(newCafeID, nameText, surnameText, "Admin", email, password))
+                    // Сохраняем имя при создании нового кафе
+                    UserDefaults.standard.set(cafeNameText, forKey: "cafeName")
                     self.performSegue(withIdentifier: "AdminStartVC", sender: self)
                 }
-                self.performSegue(withIdentifier: "AdminStartVC", sender: self)
             }
         }
     }
+
 
     func addDoneButtonKeyboard(_ view: UITextField) {
         let toolbar = UIToolbar()
