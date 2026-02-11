@@ -50,6 +50,11 @@ class CreateTableViewController: UIViewController {
         checkTableNumberExisting(tableNumber, cafeID, completion: {
             existingTableNumber in
             if !existingTableNumber {
+                let cafeID = UserDefaults.standard.string(forKey: "cafeID") ?? ""
+                let selfID = UserDefaults.standard.string(forKey: "selfID") ?? ""
+                
+                let qrImage = generateTableQR(cafeID, tableNumber, personCount, selfID)
+                
                 db.child("Places").child(self.cafeID).child("tables").child("\(tableNumber)").setValue([
                     "tableNumber": tableNumber,
                     "personCount": personCount
@@ -73,13 +78,39 @@ class CreateTableViewController: UIViewController {
                     client6Bill: 0,
                     bill: 0
                 )
-
+                
                 tables.append(newTable)
                 saveTables(tables)
                 
-                self.showAlert("Успешно!", "Стол с номером \(tableNumber) успешно добавлен", UIAlertAction(title: "Ок", style: .default, handler: { _ in
+                let alert = UIAlertController(
+                    title: "Успешно!",
+                    message: "Стол №\(tableNumber) добавлен. Клиент может отсканировать этот код:",
+                    preferredStyle: .alert
+                )
+                
+                if let qr = qrImage {
+                    let imageView = UIImageView(image: qr)
+                    imageView.contentMode = .scaleAspectFit
+                    
+                    imageView.translatesAutoresizingMaskIntoConstraints = false
+                    alert.view.addSubview(imageView)
+                    
+                    NSLayoutConstraint.activate([
+                        imageView.topAnchor.constraint(equalTo: alert.view.topAnchor, constant: 100),
+                        imageView.centerXAnchor.constraint(equalTo: alert.view.centerXAnchor),
+                        imageView.widthAnchor.constraint(equalToConstant: 150),
+                        imageView.heightAnchor.constraint(equalToConstant: 150),
+                        alert.view.bottomAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 70)
+                    ])
+                }
+                
+                let okAction = UIAlertAction(title: "Ок", style: .default) { _ in
                     self.navigationController?.popViewController(animated: true)
-                }))
+                }
+                
+                alert.addAction(okAction)
+                self.present(alert, animated: true)
+                
             } else {
                 self.showAlert("Ошибка", "Номер стола \(tableNumber) занят. Введите другой номер стола", UIAlertAction(title: "Ок", style: .default))
             }

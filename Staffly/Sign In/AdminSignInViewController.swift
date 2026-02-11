@@ -89,6 +89,7 @@ class AdminSignInViewController: UIViewController {
         db.child("Places").observeSingleEvent(of: .value) { snapshot in
             var emailExists = false
             
+            // 1. Проверка существования Email по всей базе
             for placeChild in snapshot.children {
                 if let placeSnap = placeChild as? DataSnapshot {
                     if placeSnap.hasChild("employees") {
@@ -111,23 +112,34 @@ class AdminSignInViewController: UIViewController {
                 return
             }
             
+            // 2. Проверка существования кафе по НАЗВАНИЮ и АДРЕСУ
             var existingCafeID: String?
-            var foundCafeName: String? // Переменная для хранения найденного имени
+            var foundCafeName: String?
+            
+            // Подготовка введенных данных для сравнения (нижний регистр и без пробелов)
+            let normalizedInputName = cafeNameText.lowercased().replacingOccurrences(of: " ", with: "")
+            let normalizedInputAddress = cafeAdressText.lowercased().replacingOccurrences(of: " ", with: "")
             
             for child in snapshot.children {
                 if let snap = child as? DataSnapshot,
                    let info = snap.childSnapshot(forPath: "info").value as? [String: Any],
-                   let name = info["name"] as? String,
-                   name.lowercased().replacingOccurrences(of: " ", with: "") == cafeNameText.lowercased().replacingOccurrences(of: " ", with: "") {
+                   let dbName = info["name"] as? String,
+                   let dbAddress = info["address"] as? String {
                     
-                    existingCafeID = snap.key
-                    foundCafeName = name
-                    break
+                    let normalizedDBName = dbName.lowercased().replacingOccurrences(of: " ", with: "")
+                    let normalizedDBAddress = dbAddress.lowercased().replacingOccurrences(of: " ", with: "")
+                    
+                    // Если совпало И название И адрес
+                    if normalizedDBName == normalizedInputName && normalizedDBAddress == normalizedInputAddress {
+                        existingCafeID = snap.key
+                        foundCafeName = dbName
+                        break
+                    }
                 }
             }
             
             if let cafeID = existingCafeID {
-                // КЕЙС 1 и 2: Кафе существует
+                // КЕЙС 1 и 2: Кафе существует (проверяем наличие админа)
                 db.child("Places").child(cafeID).child("employees").observeSingleEvent(of: .value, with: { snapshot in
                     var hasAdmin = false
                     
@@ -142,14 +154,14 @@ class AdminSignInViewController: UIViewController {
                     }
                     
                     if hasAdmin {
-                        // Требуем код
+                        // Админ уже есть -> требуем ID и инвайт-код
                         self.cafeIDTextField.isHidden = false
                         self.inviteCodeTextField.isHidden = false
                         
                         guard let cafeIDText = self.cafeIDTextField.text,
                               validateCafeID(cafeIDText),
                               cafeIDText == cafeID else {
-                            self.showAlert("Ошибка", "Введите ID заведения")
+                            self.showAlert("Ошибка", "Введите верный ID заведения")
                             return
                         }
                         guard let codeText = self.inviteCodeTextField.text,
@@ -179,7 +191,6 @@ class AdminSignInViewController: UIViewController {
                             
                             if codeValid {
                                 debugPrint(generatePersonalID(cafeID, nameText, surnameText, roleForUser ?? "Worker", email, password))
-                                // Сохраняем имя
                                 UserDefaults.standard.set(foundCafeName ?? cafeNameText, forKey: "cafeName")
                                 self.performSegue(withIdentifier: "AdminStartVC", sender: self)
                             } else {
@@ -187,27 +198,26 @@ class AdminSignInViewController: UIViewController {
                             }
                         }
                     } else {
-                        // Кафе есть, админа нет
+                        // Кафе есть, но админа в нем еще нет
                         debugPrint(generatePersonalID(cafeID, nameText, surnameText, "Admin", email, password))
-                        // Сохраняем имя
                         UserDefaults.standard.set(foundCafeName ?? cafeNameText, forKey: "cafeName")
                         self.performSegue(withIdentifier: "AdminStartVC", sender: self)
                     }
                 })
             } else {
-                // КЕЙС 3: Кафе не существует (создаем новое)
+                // КЕЙС 3: Кафе с такой комбинацией Название+Адрес не найдено (создаем новое)
                 self.cafeIDTextField.isHidden = true
                 self.inviteCodeTextField.isHidden = true
                 
                 generateCafeID(name: cafeNameText, address: cafeAdressText) { newCafeID in
                     print(generatePersonalID(newCafeID, nameText, surnameText, "Admin", email, password))
-                    // Сохраняем имя при создании нового кафе
                     UserDefaults.standard.set(cafeNameText, forKey: "cafeName")
                     self.performSegue(withIdentifier: "AdminStartVC", sender: self)
                 }
             }
         }
     }
+
 
 
     func addDoneButtonKeyboard(_ view: UITextField) {

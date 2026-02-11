@@ -9,6 +9,7 @@ import Foundation
 import Cloudinary
 import UIKit
 import FirebaseDatabase
+import CoreImage.CIFilterBuiltins
 
 // MARK : - Storyboard
 
@@ -157,6 +158,26 @@ struct Table: Codable, Equatable {
 }
 
 var tables: [Table] = []
+
+func generateTableQR(_ cafeID: String, _ tableNumber: Int, _ clientCount: Int, _ waiterID: String) -> UIImage? {
+    let rawString = "staffly://table?cafeID=\(cafeID)&num=\(tableNumber)&clients=\(clientCount)&waiter=\(waiterID)"
+    
+    guard let encodedString = rawString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+          let data = encodedString.data(using: .utf8) else { return nil }
+    
+    let filter = CIFilter.qrCodeGenerator()
+    filter.setValue(data, forKey: "inputMessage")
+    
+    filter.setValue("Q", forKey: "inputCorrectionLevel")
+    
+    guard let outputImage = filter.outputImage else { return nil }
+    
+    let transform = CGAffineTransform(scaleX: 100, y: 100)
+    let scaledImage = outputImage.transformed(by: transform)
+    
+    return UIImage(ciImage: scaledImage)
+}
+
 
 struct Employee {
     var id: String

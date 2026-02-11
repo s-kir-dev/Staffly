@@ -81,6 +81,44 @@ extension TablesViewController: UITableViewDelegate, UITableViewDataSource {
         return 264
     }
     
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let table = tables[indexPath.row]
+        
+        let cafeID = UserDefaults.standard.string(forKey: "cafeID") ?? ""
+        let selfID = UserDefaults.standard.string(forKey: "selfID") ?? ""
+        
+        let qrImage = generateTableQR(cafeID, table.number, table.personCount, selfID)
+        
+        let alert = UIAlertController(
+            title: "Для добавления отсканируйте",
+            message: "QR-код для стола №\(table.number):",
+            preferredStyle: .alert
+        )
+        
+        if let qr = qrImage {
+            let imageView = UIImageView(image: qr)
+            imageView.contentMode = .scaleAspectFit
+            
+            imageView.translatesAutoresizingMaskIntoConstraints = false
+            alert.view.addSubview(imageView)
+            
+            NSLayoutConstraint.activate([
+                imageView.topAnchor.constraint(equalTo: alert.view.topAnchor, constant: 70),
+                imageView.centerXAnchor.constraint(equalTo: alert.view.centerXAnchor),
+                imageView.widthAnchor.constraint(equalToConstant: 150),
+                imageView.heightAnchor.constraint(equalToConstant: 150),
+                alert.view.bottomAnchor.constraint(equalTo: imageView.bottomAnchor, constant: 70)
+            ])
+        }
+        
+        let okAction = UIAlertAction(title: "Ок", style: .default) { _ in
+            self.navigationController?.popViewController(animated: true)
+        }
+        
+        alert.addAction(okAction)
+        self.present(alert, animated: true)
+    }
+    
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
 
         let table = tables[indexPath.row]
