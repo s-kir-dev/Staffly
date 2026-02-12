@@ -137,7 +137,8 @@ class EditProductViewController: UIViewController {
                 "productImageURL": updatedProduct.productImageURL,
                 "productName": updatedProduct.productName,
                 "productPrice": updatedProduct.productPrice,
-                "additionWishes": updatedProduct.additionWishes
+                "additionWishes": updatedProduct.additionWishes,
+                "placeName": UserDefaults.standard.string(forKey: "cafeName") ?? "cafeName"
             ]) { error, _ in
                 DispatchQueue.main.async {
                     alert.dismiss(animated: true) {
