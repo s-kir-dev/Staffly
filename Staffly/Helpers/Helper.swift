@@ -105,8 +105,8 @@ struct Product: Codable, Hashable {
     let productName: String
     var productPrice: Double
     var additionWishes: String
-    let weight: Int
-    let ccal: Int
+    var weight: Int
+    var ccal: Int
 }
 
 struct ReadyOrder {
