@@ -159,7 +159,16 @@ struct Table: Codable, Equatable {
     }
 }
 
+// MARK : - Structures
+
+struct Message: Hashable {
+    let id: String
+    let text: String 
+}
+
 var tables: [Table] = []
+var messages: [Message] = []
+
 
 func generateTableQR(_ cafeID: String, _ tableNumber: Int, _ clientCount: Int, _ waiterID: String) -> UIImage? {
     let rawString = "staffly://table?cafeID=\(cafeID)&num=\(tableNumber)&clients=\(clientCount)&waiter=\(waiterID)"
@@ -225,6 +234,29 @@ func downloadData(_ cafeID: String, completion: @escaping([Product]) -> Void) {
         completion(products)
     })
 }
+
+func observeMessages(cafeID: String, selfID: String, completion: @escaping ([Message]) -> Void) {
+    db.child("Places").child(cafeID).child("employees").child(selfID).child("messages").observe(.value) { snapshot in
+        var newMessages: [Message] = []
+        
+        for child in snapshot.children {
+            if let snap = child as? DataSnapshot,
+               let messageText = snap.value as? String {
+                let msg = Message(id: snap.key, text: messageText)
+                newMessages.append(msg)
+            }
+        }
+        
+        messages = newMessages
+        completion(newMessages)
+    }
+}
+
+func deleteMessage(messageID: String, cafeID: String, selfID: String) {
+    db.child("Places").child(cafeID).child("employees").child(selfID).child("messages").child(messageID).removeValue()
+}
+
+
 
 func downloadInviteCodes(_ cafeID: String, completion: @escaping([InviteCode]) -> Void) {
     db.child("Places").child(cafeID).child("inviteCodes").observeSingleEvent(of: .value, with: { snapshot in

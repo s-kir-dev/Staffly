@@ -372,7 +372,26 @@
                             <constraint firstItem="bS2-Sh-tQX" firstAttribute="top" secondItem="bCE-IA-F3W" secondAttribute="top" id="zq2-1E-n6h"/>
                         </constraints>
                     </view>
-                    <navigationItem key="navigationItem" title="Профиль" largeTitleDisplayMode="never" id="xmB-vV-WvD"/>
+                    <navigationItem key="navigationItem" title="Профиль" largeTitleDisplayMode="never" id="xmB-vV-WvD">
+                        <barButtonItem key="leftBarButtonItem" style="plain" id="dkD-zj-YwB">
+                            <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" id="Wcc-wT-SuJ">
+                                <rect key="frame" x="20" y="4.6666666666666687" width="36" height="34.666666666666664"/>
+                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                                <constraints>
+                                    <constraint firstAttribute="height" constant="45" id="8tf-CV-762"/>
+                                    <constraint firstAttribute="width" secondItem="Wcc-wT-SuJ" secondAttribute="height" multiplier="1:1" id="w2N-6f-jT5"/>
+                                </constraints>
+                                <state key="normal" title="Button"/>
+                                <buttonConfiguration key="configuration" style="filled" image="ellipsis.message.fill" catalog="system" cornerStyle="capsule">
+                                    <color key="baseForegroundColor" white="1" alpha="1" colorSpace="custom" customColorSpace="genericGamma22GrayColorSpace"/>
+                                    <color key="baseBackgroundColor" red="0.9399414062" green="0.63671875" blue="0.3061523438" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
+                                </buttonConfiguration>
+                                <connections>
+                                    <segue destination="U2b-JB-DlY" kind="show" id="PeT-ii-6MW"/>
+                                </connections>
+                            </button>
+                        </barButtonItem>
+                    </navigationItem>
                     <connections>
                         <outlet property="cafeIDLabel" destination="cMb-gq-MXn" id="3ZR-mB-egW"/>
                         <outlet property="deleteAccountButton" destination="QpN-c8-uh5" id="dP9-sH-6Ra"/>
@@ -389,7 +408,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="LZy-FL-bLa" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="3608" y="767"/>
+            <point key="canvasLocation" x="3606.8702290076335" y="766.90140845070425"/>
         </scene>
         <!--Navigation Controller-->
         <scene sceneID="w5e-Sj-XLc">
@@ -1170,7 +1189,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="4jP-CZ-mVv" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="4340" y="1413"/>
+            <point key="canvasLocation" x="4340" y="2071"/>
         </scene>
         <!--Статистика-->
         <scene sceneID="cA0-Wg-YMT">
@@ -1334,7 +1353,7 @@
                 </viewController>
                 <placeholder placeholderIdentifier="IBFirstResponder" id="INL-uT-GQR" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
             </objects>
-            <point key="canvasLocation" x="5059" y="1413"/>
+            <point key="canvasLocation" x="5059" y="2070"/>
         </scene>
         <!--Заказы-->
         <scene sceneID="Zuz-pC-n0i">
@@ -3202,6 +3221,75 @@
             </objects>
             <point key="canvasLocation" x="4339.6946564885493" y="104.92957746478874"/>
         </scene>
+        <!--Сообщения-->
+        <scene sceneID="v6n-Ja-jzs">
+            <objects>
+                <viewController id="U2b-JB-DlY" customClass="MessagesViewController" customModule="Staffly" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="MR7-x2-fmP">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="-1" estimatedSectionHeaderHeight="-1" sectionFooterHeight="-1" estimatedSectionFooterHeight="-1" translatesAutoresizingMaskIntoConstraints="NO" id="uYx-Tg-rai">
+                                <rect key="frame" x="0.0" y="165" width="393" height="604"/>
+                                <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                                <prototypes>
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="cell" rowHeight="81" id="JQx-xe-LmM" customClass="MessageTableViewCell" customModule="Staffly" customModuleProvider="target">
+                                        <rect key="frame" x="0.0" y="50" width="393" height="81"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="JQx-xe-LmM" id="i29-eu-msU">
+                                            <rect key="frame" x="0.0" y="0.0" width="393" height="81"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFit" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="questionmark.message.fill" catalog="system" translatesAutoresizingMaskIntoConstraints="NO" id="wU9-AO-CP6">
+                                                    <rect key="frame" x="20" y="8.6666666666666679" width="65" height="62.666666666666657"/>
+                                                    <color key="tintColor" red="0.9399414062" green="0.63671875" blue="0.3061523438" alpha="1" colorSpace="custom" customColorSpace="displayP3"/>
+                                                    <constraints>
+                                                        <constraint firstAttribute="height" constant="65" id="3q8-of-Kp5"/>
+                                                        <constraint firstAttribute="width" secondItem="wU9-AO-CP6" secondAttribute="height" id="nGE-Fr-Yuz"/>
+                                                    </constraints>
+                                                </imageView>
+                                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Вас зовут к столу № 125" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="11" translatesAutoresizingMaskIntoConstraints="NO" id="wG8-Ue-QGt">
+                                                    <rect key="frame" x="93" y="15" width="264" height="51"/>
+                                                    <fontDescription key="fontDescription" type="system" weight="black" pointSize="21"/>
+                                                    <nil key="textColor"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                            </subviews>
+                                            <constraints>
+                                                <constraint firstAttribute="trailingMargin" secondItem="wG8-Ue-QGt" secondAttribute="trailing" constant="16" id="0bB-FQ-lmU"/>
+                                                <constraint firstAttribute="bottomMargin" secondItem="wG8-Ue-QGt" secondAttribute="bottom" id="IGV-ie-b8O"/>
+                                                <constraint firstItem="wG8-Ue-QGt" firstAttribute="top" secondItem="i29-eu-msU" secondAttribute="topMargin" id="Mkm-SF-c2X"/>
+                                                <constraint firstItem="wU9-AO-CP6" firstAttribute="leading" secondItem="i29-eu-msU" secondAttribute="leading" constant="20" symbolic="YES" id="Zrk-e3-EHD"/>
+                                                <constraint firstItem="wU9-AO-CP6" firstAttribute="centerY" secondItem="i29-eu-msU" secondAttribute="centerY" id="mTI-0M-3mz"/>
+                                                <constraint firstItem="wG8-Ue-QGt" firstAttribute="leading" secondItem="wU9-AO-CP6" secondAttribute="trailing" constant="8" symbolic="YES" id="ssb-TX-JLU"/>
+                                            </constraints>
+                                        </tableViewCellContentView>
+                                        <connections>
+                                            <outlet property="messageLabel" destination="wG8-Ue-QGt" id="v1F-ZH-OQx"/>
+                                        </connections>
+                                    </tableViewCell>
+                                </prototypes>
+                            </tableView>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="qGY-u6-qpZ"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                        <constraints>
+                            <constraint firstItem="qGY-u6-qpZ" firstAttribute="bottom" secondItem="uYx-Tg-rai" secondAttribute="bottom" id="89P-iS-Sn1"/>
+                            <constraint firstItem="uYx-Tg-rai" firstAttribute="top" secondItem="qGY-u6-qpZ" secondAttribute="top" id="aOS-bh-qmV"/>
+                            <constraint firstItem="qGY-u6-qpZ" firstAttribute="trailing" secondItem="uYx-Tg-rai" secondAttribute="trailing" id="au4-MI-DFh"/>
+                            <constraint firstItem="uYx-Tg-rai" firstAttribute="leading" secondItem="qGY-u6-qpZ" secondAttribute="leading" id="lmn-ei-9mL"/>
+                        </constraints>
+                    </view>
+                    <tabBarItem key="tabBarItem" title="Коды" image="person.fill.badge.plus" catalog="system" id="eZU-BU-lYm"/>
+                    <navigationItem key="navigationItem" title="Сообщения" largeTitleDisplayMode="always" id="X32-gj-91k"/>
+                    <connections>
+                        <outlet property="tableView" destination="uYx-Tg-rai" id="j5w-9P-Rg3"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="ubF-HL-i49" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="4340" y="1413"/>
+        </scene>
     </scenes>
     <inferredMetricsTieBreakers>
         <segue reference="0vd-Ad-902"/>
@@ -3219,6 +3307,7 @@
         <image name="billBackground" width="927" height="1200"/>
         <image name="checkmark.seal.fill" catalog="system" width="128" height="124"/>
         <image name="delivery-city" width="714" height="370"/>
+        <image name="ellipsis.message.fill" catalog="system" width="128" height="104"/>
         <image name="fork.knife.circle.fill" catalog="system" width="128" height="123"/>
         <image name="info.circle" catalog="system" width="128" height="123"/>
         <image name="line.3.horizontal.decrease.circle" catalog="system" width="128" height="123"/>
@@ -3227,6 +3316,7 @@
         <image name="person.crop.circle" catalog="system" width="128" height="123"/>
         <image name="person.fill.badge.plus" catalog="system" width="128" height="126"/>
         <image name="plus.app.fill" catalog="system" width="128" height="114"/>
+        <image name="questionmark.message.fill" catalog="system" width="128" height="104"/>
         <image name="star" catalog="system" width="128" height="116"/>
         <image name="table" width="1000" height="1000"/>
         <image name="tablesBackground" width="393" height="749"/>
