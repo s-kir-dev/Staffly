@@ -28,7 +28,7 @@ class EditableMenuViewController: UIViewController {
     let cloudinary = CloudinaryManager.shared
     let refreshControl = UIRefreshControl()
     
-    var selectedProduct: Product = Product(id: "", menuNumber: 0, productCategory: "", productDescription: "", productImageURL: "", productName: "", productPrice: 0.0, additionWishes: "")
+    var selectedProduct: Product = Product(id: "", menuNumber: 0, productCategory: "", productDescription: "", productImageURL: "", productName: "", productPrice: 0.0, additionWishes: "", weight: 0, ccal: 0)
 
     override func viewDidLoad() {
         super.viewDidLoad()

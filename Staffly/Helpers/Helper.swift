@@ -105,6 +105,8 @@ struct Product: Codable, Hashable {
     let productName: String
     var productPrice: Double
     var additionWishes: String
+    let weight: Int
+    let ccal: Int
 }
 
 struct ReadyOrder {
@@ -199,23 +201,6 @@ var employee: Employee = Employee(id: "", name: "", surname: "", email: "", pass
 
 let db = Database.database().reference()
 
-func uploadData(_ cafeID: String, tableNumber: Int, clientNumber: Int,  _ orders: [Product]) {
-    for order in orders {
-        db.child(cafeID).child("menu").child(UUID().uuidString).setValue([
-            "a tableNumber": tableNumber,
-            "b clientNumber": clientNumber,
-            "id": order.id,
-            "menuNumber": order.menuNumber,
-            "productCategory": order.productCategory,
-            "productDescription": order.productDescription,
-            "productImageURL": order.productImageURL,
-            "productName": order.productName,
-            "productPrice": order.productPrice,
-            "additionWishes": order.additionWishes
-        ])
-    }
-}
-
 func downloadData(_ cafeID: String, completion: @escaping([Product]) -> Void) {
     var products: [Product] = []
     
@@ -231,7 +216,9 @@ func downloadData(_ cafeID: String, completion: @escaping([Product]) -> Void) {
                     productImageURL: data["productImageURL"] as? String ?? "",
                     productName: data["productName"] as? String ?? "",
                     productPrice: data["productPrice"] as? Double ?? 0.0,
-                    additionWishes: data["additionWishes"] as? String ?? ""
+                    additionWishes: data["additionWishes"] as? String ?? "",
+                    weight: data["productWeight"] as? Int ?? 0,
+                    ccal: data["productCcal"] as? Int ?? 0
                 ))
             }
         }

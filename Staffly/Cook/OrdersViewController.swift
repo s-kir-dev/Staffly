@@ -45,6 +45,8 @@ class OrdersViewController: UIViewController {
                        let productPrice = dict["productPrice"] as? Double {
                         
                         let additionWishes = dict["additionWishes"] as? String ?? ""
+                        let weight = dict["productWeight"] as? Int ?? 0
+                        let ccal = dict["productCcal"] as? Int ?? 0
                         let product = Product(
                             id: id,
                             menuNumber: menuNumber,
@@ -53,7 +55,9 @@ class OrdersViewController: UIViewController {
                             productImageURL: productImageURL,
                             productName: productName,
                             productPrice: productPrice,
-                            additionWishes: additionWishes
+                            additionWishes: additionWishes,
+                            weight: weight,
+                            ccal: ccal
                         )
                         newOrders.append(product)
                         keys.append(orderSnapshot.key)

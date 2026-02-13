@@ -23,7 +23,7 @@ class MenuViewController: UIViewController {
     var orderedProducts: [Product] = [] // отвечает за switch.isOn в ячейке таблицы и хранит в себе выбранные в этот раз блюда для заказа
     var summa: Double = 0
     var summaSelectedProducts: Double = 0
-    var tappedProduct: Product = Product(id: "", menuNumber: 0, productCategory: "", productDescription: "", productImageURL: "", productName: "", productPrice: 0, additionWishes: "")
+    var tappedProduct: Product = Product(id: "", menuNumber: 0, productCategory: "", productDescription: "", productImageURL: "", productName: "", productPrice: 0, additionWishes: "", weight: 0, ccal: 0)
 
     let searchController = UISearchController(searchResultsController: nil)
     let loading = UIActivityIndicatorView(style: .large)

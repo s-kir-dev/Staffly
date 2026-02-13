@@ -17,53 +17,46 @@ class EditProductViewController: UIViewController {
     @IBOutlet weak var productPriceTextField: UITextField!
     @IBOutlet weak var productImageView: UIImageView!
     @IBOutlet weak var changeImageButton: UIButton!
+    @IBOutlet weak var weightTextField: UITextField!
+    @IBOutlet weak var ccalTextField: UITextField!
     @IBOutlet weak var saveProductButton: UIButton!
     
     let imagePicker = UIImagePickerController()
     let cloudinary = CloudinaryManager.shared
-    let cafeID = UserDefaults.standard.string(forKey: "cafeID")!
+    let cafeID = UserDefaults.standard.string(forKey: "cafeID") ?? ""
     
-    var product: Product = Product(
-        id: "",
-        menuNumber: 0,
-        productCategory: "",
-        productDescription: "",
-        productImageURL: "",
-        productName: "",
-        productPrice: 0.0,
-        additionWishes: ""
-    )
+    var product: Product = Product(id: "", menuNumber: 0, productCategory: "", productDescription: "", productImageURL: "", productName: "", productPrice: 0.0, additionWishes: "", weight: 0, ccal: 0)
     
     private var imageChanged = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        productNumberTextField.delegate = self
-        productNameTextField.delegate = self
-        productDescriptionTextView.delegate = self
-        productCategoryTextField.delegate = self
-        productPriceTextField.delegate = self
-        
-        makeRounded(productNumberTextField)
-        makeRounded(productNameTextField)
-        makeRounded(productCategoryTextField)
-        makeRounded(productPriceTextField)
-        
-        productDescriptionTextView.layer.cornerRadius = 17
-        productImageView.layer.cornerRadius = 17
-        productImageView.clipsToBounds = true
-        
-        changeImageButton.addTarget(self, action: #selector(pickImage), for: .touchUpInside)
-        saveProductButton.addTarget(self, action: #selector(saveProductTapped), for: .touchUpInside)
-        
-        addDoneButtonKeyboard(productNumberTextField)
-        addDoneButtonKeyboard(productPriceTextField)
+        setupDelegates()
+        setupStyles()
+        setupUI()
         
         imagePicker.delegate = self
         imagePicker.allowsEditing = true
         
-        setupUI()
+        changeImageButton.addTarget(self, action: #selector(pickImage), for: .touchUpInside)
+        saveProductButton.addTarget(self, action: #selector(saveProductTapped), for: .touchUpInside)
+    }
+    
+    private func setupDelegates() {
+        [productNumberTextField, productNameTextField, productCategoryTextField, productPriceTextField, weightTextField, ccalTextField].forEach {
+            $0?.delegate = self
+            addDoneButtonKeyboard($0!)
+        }
+        productDescriptionTextView.delegate = self
+    }
+    
+    private func setupStyles() {
+        [productNumberTextField, productNameTextField, productCategoryTextField, productPriceTextField, weightTextField, ccalTextField].forEach {
+            makeRounded($0!)
+        }
+        productDescriptionTextView.layer.cornerRadius = 17
+        productImageView.layer.cornerRadius = 17
+        productImageView.clipsToBounds = true
     }
     
     func setupUI() {
@@ -72,40 +65,30 @@ class EditProductViewController: UIViewController {
         productDescriptionTextView.text = product.productDescription
         productCategoryTextField.text = product.productCategory
         productPriceTextField.text = "\(product.productPrice)"
+        weightTextField.text = "\(product.weight)" // Добавил
+        ccalTextField.text = "\(product.ccal)"     // Добавил
         productImageView.image = globalImageCache[product.id] ?? UIImage(named: "блюдо")
+        addDoneButtonKeyboard(weightTextField)
+        addDoneButtonKeyboard(ccalTextField)
     }
     
     @objc func saveProductTapped() {
-        guard let numberText = productNumberTextField.text, !numberText.isEmpty,
-              let number = Int(numberText) else {
-            showAlert("Ошибка", "Введите номер блюда", action: UIAlertAction(title: "Ок", style: .default))
+        // 1. Валидация
+        guard let numberText = productNumberTextField.text, let number = Int(numberText),
+              let name = productNameTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty,
+              let priceText = productPriceTextField.text?.replacingOccurrences(of: ",", with: "."),
+              let price = Double(priceText),
+              let weight = Int(weightTextField.text ?? ""),
+              let ccal = Int(ccalTextField.text ?? "") else {
+            showAlert("Ошибка", "Заполните все поля корректно", action: UIAlertAction(title: "Ок", style: .default))
             return
         }
         
-        guard let name = productNameTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else {
-            showAlert("Ошибка", "Введите название блюда", action: UIAlertAction(title: "Ок", style: .default))
-            return
-        }
+        let description = productDescriptionTextView.text ?? ""
+        let category = productCategoryTextField.text?.capitalized ?? ""
         
-        guard let description = productDescriptionTextView.text?.trimmingCharacters(in: .whitespacesAndNewlines), !description.isEmpty else {
-            showAlert("Ошибка", "Введите описание блюда", action: UIAlertAction(title: "Ок", style: .default))
-            return
-        }
-        
-        guard let rawCategory = productCategoryTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !rawCategory.isEmpty else {
-            showAlert("Ошибка", "Введите категорию блюда", action: UIAlertAction(title: "Ок", style: .default))
-            return
-        }
-        
-        let categoryDisplay = rawCategory.capitalized
-        
-        guard let priceText = productPriceTextField.text,
-              let price = Double(priceText)?.roundValue() else {
-            showAlert("Ошибка", "Введите корректную цену блюда", action: UIAlertAction(title: "Ок", style: .default))
-            return
-        }
-        
-        let alert = UIAlertController(title: nil, message: "Сохранение изменений...\n", preferredStyle: .alert)
+        // 2. Лоадер
+        let alert = UIAlertController(title: nil, message: "Сохранение...\n", preferredStyle: .alert)
         let loading = UIActivityIndicatorView(style: .medium)
         loading.translatesAutoresizingMaskIntoConstraints = false
         alert.view.addSubview(loading)
@@ -116,89 +99,68 @@ class EditProductViewController: UIViewController {
         loading.startAnimating()
         present(alert, animated: true)
         
+        // 3. Функция сохранения в БД
         func updateProductInDatabase(imageUrl: String) {
-            let updatedProduct = Product(
-                id: self.product.id,
-                menuNumber: number,
-                productCategory: categoryDisplay,
-                productDescription: description,
-                productImageURL: imageUrl,
-                productName: name,
-                productPrice: price,
-                additionWishes: ""
-            )
-            
             let productRef = db.child("Places").child(self.cafeID).child("menu").child(self.product.id)
-            productRef.setValue([
-                "id": updatedProduct.id,
-                "menuNumber": updatedProduct.menuNumber,
-                "productCategory": updatedProduct.productCategory,
-                "productDescription": updatedProduct.productDescription,
-                "productImageURL": updatedProduct.productImageURL,
-                "productName": updatedProduct.productName,
-                "productPrice": updatedProduct.productPrice,
-                "additionWishes": updatedProduct.additionWishes,
-                "placeName": UserDefaults.standard.string(forKey: "cafeName") ?? "cafeName"
-            ]) { error, _ in
+            
+            let data: [String: Any] = [
+                "id": self.product.id,
+                "menuNumber": number,
+                "productCategory": category,
+                "productDescription": description,
+                "productImageURL": imageUrl,
+                "productName": name,
+                "productPrice": price,
+                "additionWishes": self.product.additionWishes,
+                "productWeight": weight,
+                "productCcal": ccal,
+                "placeName": UserDefaults.standard.string(forKey: "cafeName") ?? ""
+            ]
+            
+            productRef.setValue(data) { error, _ in
                 DispatchQueue.main.async {
                     alert.dismiss(animated: true) {
                         if let error = error {
-                            self.showAlert("Ошибка", "Не удалось сохранить: \(error.localizedDescription)", action: UIAlertAction(title: "Ок", style: .default))
+                            self.showAlert("Ошибка", error.localizedDescription, action: UIAlertAction(title: "Ок", style: .default))
                         } else {
+                            // Обновляем локальный кэш
                             globalImageCache[self.product.id] = self.productImageView.image
-                            self.product.productImageURL = imageUrl
-                            self.showAlert("Успех", "Изменения успешно сохранены!", action: UIAlertAction(title: "Ок", style: .default, handler: { _ in
-                                self.navigationController?.popViewController(animated: true)
-                            }))
+                            
+                            // Важно: обновляем объект в глобальном массиве, если он есть
+                            if let index = menu.firstIndex(where: { $0.id == self.product.id }) {
+                                menu[index] = Product(id: self.product.id, menuNumber: number, productCategory: category, productDescription: description, productImageURL: imageUrl, productName: name, productPrice: price, additionWishes: self.product.additionWishes, weight: weight, ccal: ccal)
+                            }
+                            
+                            self.navigationController?.popViewController(animated: true)
                         }
                     }
                 }
             }
         }
         
-        if !imageChanged {
-            updateProductInDatabase(imageUrl: product.productImageURL)
-            return
-        }
-        
-        guard let imageData = productImageView.image?.pngData() else {
-            showAlert("Ошибка", "Изображение не выбрано", action: UIAlertAction(title: "Ок", style: .default))
-            alert.dismiss(animated: true)
-            return
-        }
-        
-        let newUrl = "\(UUID().uuidString)"
-        
-        cloudinary.uploadImage(imageData, publicId: newUrl) { result in
-            switch result {
-            case .success(let imageUrl):
-                DispatchQueue.main.async {
-                    if let index = menu.firstIndex(where: { $0.id == self.product.id }) {
-                        menu[index].productImageURL = imageUrl
+        // 4. Логика с картинкой
+        if imageChanged, let imageData = productImageView.image?.jpegData(compressionQuality: 0.7) {
+            let newPublicId = UUID().uuidString
+            cloudinary.uploadImage(imageData, publicId: newPublicId) { result in
+                switch result {
+                case .success(let url):
+                    DispatchQueue.main.async {
+                        saveImageLocally(image: self.productImageView.image!, name: "\(self.product.id).png")
+                        updateProductInDatabase(imageUrl: url)
                     }
-                    globalImageCache[self.product.id] = self.productImageView.image
-                    self.imageChanged = false
-                    
-                    let imageName = "\(self.product.id).png"
-                    if let image = self.productImageView.image {
-                        saveImageLocally(image: image, name: imageName)
-                        debugPrint("♻️ Обновлено локальное изображение: \(imageName)")
+                case .failure(let error):
+                    DispatchQueue.main.async {
+                        alert.dismiss(animated: true)
+                        self.showAlert("Ошибка загрузки фото", error.localizedDescription, action: UIAlertAction(title: "Ок", style: .default))
                     }
-
-                    updateProductInDatabase(imageUrl: imageUrl)
-                }
-            case .failure(let error):
-                DispatchQueue.main.async {
-                    alert.dismiss(animated: true)
-                    self.showAlert("Ошибка", "Ошибка загрузки изображения: \(error.localizedDescription)", action: UIAlertAction(title: "Ок", style: .default))
                 }
             }
+        } else {
+            updateProductInDatabase(imageUrl: product.productImageURL)
         }
     }
     
-    @objc func pickImage() {
-        present(imagePicker, animated: true)
-    }
+    @objc func pickImage() { present(imagePicker, animated: true) }
     
     func showAlert(_ title: String, _ message: String, action: UIAlertAction) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
@@ -207,15 +169,12 @@ class EditProductViewController: UIViewController {
     }
 }
 
+// MARK: - Extensions
 extension EditProductViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
-        if let edited = info[.editedImage] as? UIImage {
-            productImageView.image = edited
-            imageChanged = true
-        } else if let original = info[.originalImage] as? UIImage {
-            productImageView.image = original
-            imageChanged = true
-        }
+        let image = (info[.editedImage] as? UIImage) ?? (info[.originalImage] as? UIImage)
+        productImageView.image = image
+        imageChanged = true
         dismiss(animated: true)
     }
 }
@@ -224,24 +183,16 @@ extension EditProductViewController {
     func addDoneButtonKeyboard(_ view: UITextField) {
         let toolbar = UIToolbar()
         toolbar.sizeToFit()
-        let doneButton = UIBarButtonItem(title: "Готово", style: .plain, target: self, action: #selector(closeKeyboard))
+        let doneButton = UIBarButtonItem(title: "Готово", style: .done, target: self, action: #selector(closeKeyboard))
         toolbar.setItems([doneButton], animated: true)
         view.inputAccessoryView = toolbar
     }
-    
-    @objc func closeKeyboard() {
-        view.endEditing(true)
-    }
+    @objc func closeKeyboard() { view.endEditing(true) }
 }
 
 extension EditProductViewController: UITextFieldDelegate, UITextViewDelegate {
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
         textField.resignFirstResponder()
-        return true
-    }
-    
-    func textViewShouldEndEditing(_ textView: UITextView) -> Bool {
-        textView.resignFirstResponder()
         return true
     }
 }
