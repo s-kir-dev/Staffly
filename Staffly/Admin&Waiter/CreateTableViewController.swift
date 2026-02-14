@@ -57,7 +57,8 @@ class CreateTableViewController: UIViewController {
                 
                 db.child("Places").child(self.cafeID).child("tables").child("\(tableNumber)").setValue([
                     "tableNumber": tableNumber,
-                    "personCount": personCount
+                    "personCount": personCount,
+                    "currentPersonCount": 0
                 ])
                 
                 let newTable = Table(
