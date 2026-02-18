@@ -166,12 +166,21 @@ extension ReadyOrdersViewController: UITableViewDelegate, UITableViewDataSource 
     
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let key = readyOrderKeys[indexPath.row]
-        let tableNumber = readyOrders[indexPath.row].tableNumber
+        let readyOrder = readyOrders[indexPath.row]
         
         let deleteAction = UIContextualAction(style: .destructive, title: "Удалить") { _, _, completionHandler in
+            
+            db.child("Places").child(self.cafeID).child("tables")
+                .child("\(readyOrder.tableNumber)")
+                .child("clients")
+                .child("client\(readyOrder.clientNumber)")
+                .child("orders")
+                .child(readyOrder.id)
+                .updateChildValues(["status": "Доставлено Вам"])
+            
             let orderRef = db.child("Places").child(self.cafeID)
                                  .child("readyOrders")
-                                 .child("\(tableNumber)")
+                                 .child("\(readyOrder.tableNumber)")
                                  .child(key)
 
             orderRef.removeValue()
