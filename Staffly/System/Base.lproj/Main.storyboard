@@ -374,7 +374,7 @@
                     </view>
                     <navigationItem key="navigationItem" title="Профиль" largeTitleDisplayMode="never" id="xmB-vV-WvD">
                         <barButtonItem key="leftBarButtonItem" style="plain" id="dkD-zj-YwB">
-                            <button key="customView" opaque="NO" contentMode="scaleToFill" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" id="Wcc-wT-SuJ">
+                            <button key="customView" opaque="NO" contentMode="scaleToFill" ambiguous="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="system" lineBreakMode="middleTruncation" id="Wcc-wT-SuJ">
                                 <rect key="frame" x="20" y="4.6666666666666687" width="36" height="34.666666666666664"/>
                                 <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
                                 <constraints>
@@ -1449,6 +1449,7 @@
                     </tabBar>
                     <connections>
                         <segue destination="S37-WP-peg" kind="relationship" relationship="viewControllers" id="qM8-y2-nGK"/>
+                        <segue destination="wD3-x4-dSL" kind="relationship" relationship="viewControllers" id="KYq-P2-QQd"/>
                         <segue destination="ao9-au-T71" kind="relationship" relationship="viewControllers" id="wnk-hz-muF"/>
                     </connections>
                 </tabBarController>
@@ -3290,6 +3291,108 @@
             </objects>
             <point key="canvasLocation" x="4340" y="1413"/>
         </scene>
+        <!--Заказы-->
+        <scene sceneID="85y-uu-lq8">
+            <objects>
+                <viewController id="B8W-I2-pYR" customClass="MyOrdersViewController" customModule="Staffly" customModuleProvider="target" sceneMemberID="viewController">
+                    <view key="view" contentMode="scaleToFill" id="ljG-ca-EyC">
+                        <rect key="frame" x="0.0" y="0.0" width="393" height="852"/>
+                        <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
+                        <subviews>
+                            <tableView clipsSubviews="YES" contentMode="scaleToFill" alwaysBounceVertical="YES" dataMode="prototypes" style="plain" separatorStyle="default" rowHeight="-1" estimatedRowHeight="-1" sectionHeaderHeight="-1" estimatedSectionHeaderHeight="-1" sectionFooterHeight="-1" estimatedSectionFooterHeight="-1" translatesAutoresizingMaskIntoConstraints="NO" id="yl5-Ag-C4z">
+                                <rect key="frame" x="0.0" y="113" width="393" height="656"/>
+                                <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                                <prototypes>
+                                    <tableViewCell clipsSubviews="YES" contentMode="scaleToFill" insetsLayoutMarginsFromSafeArea="NO" selectionStyle="blue" hidesAccessoryWhenEditing="NO" indentationLevel="1" indentationWidth="0.0" reuseIdentifier="cell" rowHeight="155" id="DI8-YZ-81N" customClass="ProductTableViewCell" customModule="Staffly" customModuleProvider="target">
+                                        <rect key="frame" x="0.0" y="50" width="393" height="155"/>
+                                        <autoresizingMask key="autoresizingMask"/>
+                                        <tableViewCellContentView key="contentView" opaque="NO" clipsSubviews="YES" multipleTouchEnabled="YES" contentMode="center" insetsLayoutMarginsFromSafeArea="NO" tableViewCell="DI8-YZ-81N" id="bxU-MO-B7n">
+                                            <rect key="frame" x="0.0" y="0.0" width="393" height="155"/>
+                                            <autoresizingMask key="autoresizingMask"/>
+                                            <subviews>
+                                                <imageView clipsSubviews="YES" userInteractionEnabled="NO" contentMode="scaleAspectFill" horizontalHuggingPriority="251" verticalHuggingPriority="251" image="background_normalizing" translatesAutoresizingMaskIntoConstraints="NO" id="ULn-NJ-s4m">
+                                                    <rect key="frame" x="10" y="12.666666666666671" width="105" height="130"/>
+                                                    <constraints>
+                                                        <constraint firstAttribute="height" constant="130" id="Ors-ic-4RQ"/>
+                                                        <constraint firstAttribute="width" constant="105" id="VP5-vU-yyc"/>
+                                                    </constraints>
+                                                </imageView>
+                                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Говядина в маринаде с травами с печеным картофелем и перцем" textAlignment="justified" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" minimumFontSize="7" translatesAutoresizingMaskIntoConstraints="NO" id="2Oi-h0-Zi4">
+                                                    <rect key="frame" x="123" y="15" width="254" height="70"/>
+                                                    <constraints>
+                                                        <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="70" id="e8h-RN-MhT"/>
+                                                    </constraints>
+                                                    <fontDescription key="fontDescription" type="system" weight="black" pointSize="15"/>
+                                                    <nil key="textColor"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Доп пожелания" lineBreakMode="tailTruncation" numberOfLines="0" baselineAdjustment="alignBaselines" minimumFontSize="7" translatesAutoresizingMaskIntoConstraints="NO" id="wQV-LA-Dar">
+                                                    <rect key="frame" x="123" y="93" width="254" height="62"/>
+                                                    <constraints>
+                                                        <constraint firstAttribute="height" constant="62" id="meu-f5-ZGH"/>
+                                                    </constraints>
+                                                    <fontDescription key="fontDescription" type="system" weight="black" pointSize="15"/>
+                                                    <nil key="textColor"/>
+                                                    <nil key="highlightedColor"/>
+                                                </label>
+                                            </subviews>
+                                            <constraints>
+                                                <constraint firstItem="ULn-NJ-s4m" firstAttribute="leading" secondItem="bxU-MO-B7n" secondAttribute="leading" constant="10" id="56b-oo-5IX"/>
+                                                <constraint firstAttribute="bottom" secondItem="wQV-LA-Dar" secondAttribute="bottom" id="9py-Mn-xcs"/>
+                                                <constraint firstItem="2Oi-h0-Zi4" firstAttribute="top" secondItem="bxU-MO-B7n" secondAttribute="top" constant="15" id="OwK-lA-OJ7"/>
+                                                <constraint firstItem="wQV-LA-Dar" firstAttribute="leading" secondItem="ULn-NJ-s4m" secondAttribute="trailing" constant="8" symbolic="YES" id="XNo-5h-RHI"/>
+                                                <constraint firstAttribute="trailing" secondItem="2Oi-h0-Zi4" secondAttribute="trailing" constant="16" id="aQW-1e-n3M"/>
+                                                <constraint firstAttribute="trailing" secondItem="wQV-LA-Dar" secondAttribute="trailing" constant="16" id="cvW-dg-SdM"/>
+                                                <constraint firstItem="2Oi-h0-Zi4" firstAttribute="leading" secondItem="ULn-NJ-s4m" secondAttribute="trailing" constant="8" symbolic="YES" id="m6T-yT-omK"/>
+                                                <constraint firstItem="ULn-NJ-s4m" firstAttribute="centerY" secondItem="bxU-MO-B7n" secondAttribute="centerY" id="pyL-b8-sRc"/>
+                                            </constraints>
+                                        </tableViewCellContentView>
+                                        <connections>
+                                            <outlet property="additionalWishesLabel" destination="wQV-LA-Dar" id="j26-a6-NFq"/>
+                                            <outlet property="productImageView" destination="ULn-NJ-s4m" id="L4o-Ro-1ee"/>
+                                            <outlet property="productNameLabel" destination="2Oi-h0-Zi4" id="PcJ-Ve-fyX"/>
+                                        </connections>
+                                    </tableViewCell>
+                                </prototypes>
+                            </tableView>
+                        </subviews>
+                        <viewLayoutGuide key="safeArea" id="yCQ-Wl-8L2"/>
+                        <color key="backgroundColor" systemColor="systemBackgroundColor"/>
+                        <constraints>
+                            <constraint firstItem="yCQ-Wl-8L2" firstAttribute="trailing" secondItem="yl5-Ag-C4z" secondAttribute="trailing" id="47n-52-S6O"/>
+                            <constraint firstItem="yl5-Ag-C4z" firstAttribute="top" secondItem="yCQ-Wl-8L2" secondAttribute="top" id="hZR-X4-6bh"/>
+                            <constraint firstItem="yl5-Ag-C4z" firstAttribute="leading" secondItem="yCQ-Wl-8L2" secondAttribute="leading" id="igO-tc-JBZ"/>
+                            <constraint firstItem="yCQ-Wl-8L2" firstAttribute="bottom" secondItem="yl5-Ag-C4z" secondAttribute="bottom" id="oYr-wy-ccW"/>
+                        </constraints>
+                    </view>
+                    <navigationItem key="navigationItem" title="Заказы" id="fXX-sW-eD1"/>
+                    <connections>
+                        <outlet property="tableView" destination="yl5-Ag-C4z" id="3Xx-Zw-kcL"/>
+                    </connections>
+                </viewController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="Noo-J0-jAr" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="3608" y="2746"/>
+        </scene>
+        <!--Мои заказы-->
+        <scene sceneID="LFt-Nq-2ZP">
+            <objects>
+                <navigationController automaticallyAdjustsScrollViewInsets="NO" id="wD3-x4-dSL" sceneMemberID="viewController">
+                    <tabBarItem key="tabBarItem" title="Мои заказы" image="circle.grid.2x2.topleft.checkmark.filled" catalog="system" id="XWL-ft-MKi"/>
+                    <toolbarItems/>
+                    <navigationBar key="navigationBar" contentMode="scaleToFill" largeTitles="YES" id="xMy-2G-wUJ">
+                        <rect key="frame" x="0.0" y="59" width="393" height="106"/>
+                        <autoresizingMask key="autoresizingMask"/>
+                    </navigationBar>
+                    <nil name="viewControllers"/>
+                    <connections>
+                        <segue destination="B8W-I2-pYR" kind="relationship" relationship="rootViewController" id="uFf-Vj-tPo"/>
+                    </connections>
+                </navigationController>
+                <placeholder placeholderIdentifier="IBFirstResponder" id="uDK-yO-dWA" userLabel="First Responder" customClass="UIResponder" sceneMemberID="firstResponder"/>
+            </objects>
+            <point key="canvasLocation" x="2854" y="2748"/>
+        </scene>
     </scenes>
     <inferredMetricsTieBreakers>
         <segue reference="0vd-Ad-902"/>
@@ -3306,6 +3409,7 @@
         <image name="background_normalizing" width="400" height="236"/>
         <image name="billBackground" width="927" height="1200"/>
         <image name="checkmark.seal.fill" catalog="system" width="128" height="124"/>
+        <image name="circle.grid.2x2.topleft.checkmark.filled" catalog="system" width="128" height="115"/>
         <image name="delivery-city" width="714" height="370"/>
         <image name="ellipsis.message.fill" catalog="system" width="128" height="104"/>
         <image name="fork.knife.circle.fill" catalog="system" width="128" height="123"/>

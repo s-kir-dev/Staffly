@@ -109,7 +109,7 @@ struct Product: Codable, Hashable {
     var ccal: Int
 }
 
-struct ReadyOrder {
+struct ReadyOrder: Codable {
     let tableNumber: Int
     let clientNumber: Int
     let id: String
@@ -168,6 +168,18 @@ struct Message: Hashable {
 
 var tables: [Table] = []
 var messages: [Message] = []
+var myOrders: [ReadyOrder] = []
+
+var myOrderKeys: [String] = []
+
+func saveMyOrderKeys(_ keys: [String]) {
+    UserDefaults.standard.set(keys, forKey: "myOrderKeys")
+}
+
+func loadMyOrderKeys() {
+    myOrderKeys = UserDefaults.standard.stringArray(forKey: "myOrderKeys") ?? []
+}
+
 
 
 func generateTableQR(_ cafeID: String, _ tableNumber: Int, _ clientCount: Int, _ waiterID: String) -> UIImage? {
@@ -505,6 +517,22 @@ func loadTables() -> [Table] {
     }
     return []
 }
+
+func saveMyOrders(_ orders: [ReadyOrder]) {
+    if let encoded = try? JSONEncoder().encode(orders) {
+        UserDefaults.standard.set(encoded, forKey: "myOrders")
+    }
+}
+
+func loadMyOrders() {
+    if let data = UserDefaults.standard.data(forKey: "myOrders"),
+       let decoded = try? JSONDecoder().decode([ReadyOrder].self, from: data) {
+        myOrders = decoded
+    } else {
+        myOrders = []
+    }
+}
+
 
 func isBigger(_ a: Int, _ b: Int) -> Bool {
     return a > b

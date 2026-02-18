@@ -14,7 +14,7 @@ class OrdersViewController: UIViewController {
     
     let cafeID = UserDefaults.standard.string(forKey: "cafeID")!
     let selfID = UserDefaults.standard.string(forKey: "selfID")!
-    var orders: [Product] = []
+    var orders: [ReadyOrder] = []
     var orderKeys: [String] = []
     
     private var ordersRef: DatabaseReference!
@@ -30,7 +30,7 @@ class OrdersViewController: UIViewController {
     
     func observeOrders() {
         ordersRef.observe(.value) { snapshot in
-            var newOrders: [Product] = []
+            var newOrders: [ReadyOrder] = []
             var keys: [String] = []
             
             for case let tableSnapshot as DataSnapshot in snapshot.children {
@@ -45,20 +45,10 @@ class OrdersViewController: UIViewController {
                        let productPrice = dict["productPrice"] as? Double {
                         
                         let additionWishes = dict["additionWishes"] as? String ?? ""
-                        let weight = dict["productWeight"] as? Int ?? 0
-                        let ccal = dict["productCcal"] as? Int ?? 0
-                        let product = Product(
-                            id: id,
-                            menuNumber: menuNumber,
-                            productCategory: productCategory,
-                            productDescription: productDescription,
-                            productImageURL: productImageURL,
-                            productName: productName,
-                            productPrice: productPrice,
-                            additionWishes: additionWishes,
-                            weight: weight,
-                            ccal: ccal
-                        )
+                        let tableNumber = dict["a tableNumber"] as? Int ?? 0
+                        let clientNumber = dict["b clientNumber"] as? Int ?? 0
+                        
+                        let product = ReadyOrder(tableNumber: tableNumber, clientNumber: clientNumber, id: id, menuNumber: menuNumber, productCategory: productCategory, productDescription: productDescription, productImageURL: productImageURL, productName: productName, productPrice: productPrice, additionWishes: additionWishes)
                         newOrders.append(product)
                         keys.append(orderSnapshot.key)
                     }
@@ -90,7 +80,10 @@ class OrdersViewController: UIViewController {
     }
     
     func hideLoadingAlert() {
-        alert?.dismiss(animated: true, completion: nil)
+        // Добавляем задержку 0.3 сек, чтобы алерт успел отобразиться перед закрытием
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+            self.alert?.dismiss(animated: true, completion: nil)
+        }
     }
 }
 
@@ -119,72 +112,71 @@ extension OrdersViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
+        // Захватываем данные ДО начала асинхронной операции
         let key = orderKeys[indexPath.row]
         let product = orders[indexPath.row]
         
-        let deleteAction = UIContextualAction(style: .destructive, title: "Готово") { _, _, completionHandler in
-            self.showLoadingAlert()
-            self.ordersRef.removeAllObservers()
+        let deleteAction = UIContextualAction(style: .destructive, title: "Взять заказ") { [weak self] _, _, completionHandler in
+            guard let self = self else { return }
             
-            self.ordersRef.observeSingleEvent(of: .value) { snapshot in
+            self.showLoadingAlert()
+            
+            self.ordersRef.observeSingleEvent(of: .value, with: { snapshot in
+                var found = false
+                
                 for case let tableSnapshot as DataSnapshot in snapshot.children {
-                    let tableNumber = tableSnapshot.key
                     if tableSnapshot.hasChild(key) {
-                        let orderRef = self.ordersRef.child(tableNumber).child(key)
-                        let readyRef = db.child("Places").child(self.cafeID).child("readyOrders").child(tableNumber).child(key)
+                        found = true
+                        let tableKey = tableSnapshot.key
+                        let specificOrderRef = self.ordersRef.child(tableKey).child(key)
                         
-                        orderRef.observeSingleEvent(of: .value) { orderSnap in
-                            guard let value = orderSnap.value as? [String: Any] else {
+                        // 1. Статус клиенту
+                        db.child("Places").child(self.cafeID).child("tables")
+                            .child("\(product.tableNumber)")
+                            .child("clients")
+                            .child("client\(product.clientNumber)")
+                            .child("orders")
+                            .child(product.id)
+                            .updateChildValues(["status": "Готовится"])
+                        
+                        // 2. Просто удаляем из БД.
+                        // Метод observe(.value) сам увидит удаление и обновит таблицу!
+                        specificOrderRef.removeValue { error, _ in
+                            DispatchQueue.main.async {
                                 self.hideLoadingAlert()
-                                completionHandler(false)
-                                self.observeOrders()
-                                return
-                            }
-                            
-                            readyRef.setValue(value) { error, _ in
-                                guard error == nil else {
-                                    self.hideLoadingAlert()
-                                    completionHandler(false)
-                                    self.observeOrders()
-                                    return
-                                }
                                 
-                                orderRef.removeValue { error, _ in
-                                    guard error == nil else {
-                                        self.hideLoadingAlert()
-                                        completionHandler(false)
-                                        self.observeOrders()
-                                        return
-                                    }
+                                if error == nil {
+                                    // Сохраняем себе
+                                    myOrders.append(product)
+                                    saveMyOrders(myOrders)
                                     
-                                    downloadUserData(self.cafeID, self.selfID) { employeeData in
-                                        employee = employeeData
-                                        employee.productsCount += 1
-                                        employee.cafeProfit += product.productPrice
-                                        
-                                        uploadUserData(self.cafeID, self.selfID, employee) { _ in
-                                            DispatchQueue.main.async {
-                                                self.orders.remove(at: indexPath.row)
-                                                self.orderKeys.remove(at: indexPath.row)
-                                                self.tableView.deleteRows(at: [indexPath], with: .fade)
-                                                self.hideLoadingAlert()
-                                                completionHandler(true)
-                                                self.observeOrders()
-                                            }
-                                        }
-                                    }
+                                    var savedKeys = UserDefaults.standard.stringArray(forKey: "myOrderKeys") ?? []
+                                    savedKeys.append(key)
+                                    UserDefaults.standard.set(savedKeys, forKey: "myOrderKeys")
+                                    
+                                    // !!! УДАЛЯЕМ ручное изменение массивов и deleteRows !!!
+                                    // Вместо этого просто завершаем экшен
+                                    completionHandler(true)
+                                } else {
+                                    completionHandler(false)
                                 }
                             }
                         }
                         break
                     }
                 }
-            }
+                
+                if !found {
+                    self.hideLoadingAlert()
+                    completionHandler(false)
+                }
+            })
         }
         
         deleteAction.backgroundColor = .systemGreen
-        deleteAction.image = UIImage(systemName: "checkmark.seal.fill")
+        deleteAction.image = UIImage(systemName: "hand.tap.fill")
         
         return UISwipeActionsConfiguration(actions: [deleteAction])
     }
+
 }
