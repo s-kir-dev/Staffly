@@ -197,39 +197,49 @@ extension TablesViewController: UITableViewDelegate, UITableViewDataSource {
         }
 
         let deleteAction = UIContextualAction(style: .destructive, title: "Удалить") { _, _, completionHandler in
-            let baseRef = db.child("Places").child(cafeID)
+            
+            let alert = UIAlertController(title: "Вы уверены?", message: "Вы уверены, что хотите удалить стол №\(tableNumber)?", preferredStyle: .alert)
+            let cancelAction = UIAlertAction(title: "Отмена", style: .cancel, handler: nil)
+            let deleteAction = UIAlertAction(title: "Удалить", style: .destructive) { _ in
+                let baseRef = db.child("Places").child(cafeID)
 
-            let group = DispatchGroup()
+                let group = DispatchGroup()
 
-            let pathsToRemove = [
-                baseRef.child("orders").child("\(tableNumber)"),
-                baseRef.child("readyOrders").child("\(tableNumber)"),
-                baseRef.child("tables").child("\(tableNumber)")
-            ]
+                let pathsToRemove = [
+                    baseRef.child("orders").child("\(tableNumber)"),
+                    baseRef.child("readyOrders").child("\(tableNumber)"),
+                    baseRef.child("tables").child("\(tableNumber)")
+                ]
 
-            for ref in pathsToRemove {
-                group.enter()
-                ref.removeValue { error, _ in
-                    if let error = error {
-                        print("Ошибка при удалении \(ref): \(error.localizedDescription)")
+                for ref in pathsToRemove {
+                    group.enter()
+                    ref.removeValue { error, _ in
+                        if let error = error {
+                            print("Ошибка при удалении \(ref): \(error.localizedDescription)")
+                        }
+                        group.leave()
                     }
-                    group.leave()
-                }
-            }
-
-            group.notify(queue: .main) {
-                tables.remove(at: indexPath.row)
-                saveTables(tables)
-                
-                if tables.isEmpty {
-                    self.emptyImageView.isHidden = false
-                } else {
-                    self.emptyImageView.isHidden = true
                 }
 
-                tableView.deleteRows(at: [indexPath], with: .automatic)
-                completionHandler(true)
+                group.notify(queue: .main) {
+                    tables.remove(at: indexPath.row)
+                    saveTables(tables)
+                    
+                    if tables.isEmpty {
+                        self.emptyImageView.isHidden = false
+                    } else {
+                        self.emptyImageView.isHidden = true
+                    }
+
+                    tableView.deleteRows(at: [indexPath], with: .automatic)
+                    completionHandler(true)
+                }
             }
+            
+            alert.addAction(cancelAction)
+            alert.addAction(deleteAction)
+            
+            self.present(alert, animated: true)
         }
 
         let updatePeopleCountAction = UIContextualAction(style: .normal, title: "Изменить") { _, _, completionHandler in
