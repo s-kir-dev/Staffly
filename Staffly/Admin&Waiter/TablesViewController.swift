@@ -14,6 +14,8 @@ class TablesViewController: UIViewController {
     @IBOutlet weak var emptyImageView: UIImageView!
     @IBOutlet weak var plusButton: UIButton!
     
+    private let refreshControl = UIRefreshControl()
+    
     var currentClient: Int = 0
     var tableIndex: Int = 0
     
@@ -22,23 +24,46 @@ class TablesViewController: UIViewController {
         
         tableView.delegate = self
         tableView.dataSource = self
+        
+        refreshControl.addTarget(self, action: #selector(refreshData), for: .valueChanged)
+        tableView.refreshControl = refreshControl
 
         plusButton.addTarget(self, action: #selector(plusButtonTapped), for: .touchUpInside)
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
-        if tables.isEmpty {
-            emptyImageView.isHidden = false
-        } else {
-            emptyImageView.isHidden = true
-        }
-        
-        
-        tableView.reloadData()
+        refreshData()
     }
     
+    @objc private func refreshData() {
+        guard let cafeID = UserDefaults.standard.string(forKey: "cafeID"),
+              let selfID = UserDefaults.standard.string(forKey: "selfID") else {
+            self.refreshControl.endRefreshing()
+            return
+        }
+        
+        let tablesRef = db.child("Places").child(cafeID).child("employees").child(selfID).child("tables")
+        
+        tablesRef.observeSingleEvent(of: .value) { snapshot in
+            let newTableNumbers = snapshot.value as? [Int] ?? []
+            tableNumbers = newTableNumbers
+            
+            loadTables(cafeID, selfID, newTableNumbers) { fetchedTables in
+                let sortedTables = fetchedTables.sorted { $0.number < $1.number }
+                tables = sortedTables
+                
+                tableNumbers = sortedTables.map { $0.number }
+                
+                DispatchQueue.main.async {
+                    self.emptyImageView.isHidden = !tables.isEmpty
+                    self.tableView.reloadData()
+                    self.refreshControl.endRefreshing()
+                    debugPrint("✅ Данные обновлены: столы \(tableNumbers)")
+                }
+            }
+        }
+    }
 
     @objc func plusButtonTapped() {
         performSegue(withIdentifier: "newTableVC", sender: nil)
@@ -61,6 +86,8 @@ class TablesViewController: UIViewController {
         }
     }
 }
+
+
 
 extension TablesViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -191,84 +218,115 @@ extension TablesViewController: UITableViewDelegate, UITableViewDataSource {
     }
     
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        let tableNumber = tables[indexPath.row].number
         guard let cafeID = UserDefaults.standard.string(forKey: "cafeID") else {
             return UISwipeActionsConfiguration(actions: [])
         }
 
         let deleteAction = UIContextualAction(style: .destructive, title: "Удалить") { _, _, completionHandler in
+            let tableToDelete = tables[indexPath.row]
+            let tableNumber = tableToDelete.number
             
             let alert = UIAlertController(title: "Вы уверены?", message: "Вы уверены, что хотите удалить стол №\(tableNumber)?", preferredStyle: .alert)
-            let cancelAction = UIAlertAction(title: "Отмена", style: .cancel, handler: nil)
-            let deleteAction = UIAlertAction(title: "Удалить", style: .destructive) { _ in
+            
+            let cancelAction = UIAlertAction(title: "Отмена", style: .cancel) { _ in
+                completionHandler(false)
+            }
+            
+            let deleteConfirm = UIAlertAction(title: "Удалить", style: .destructive) { _ in
+                let selfID = UserDefaults.standard.string(forKey: "selfID") ?? ""
                 let baseRef = db.child("Places").child(cafeID)
-
                 let group = DispatchGroup()
-
+                
+                group.enter()
+                removeTable(cafeID, selfID, tableToDelete) {
+                    group.leave()
+                }
+                
                 let pathsToRemove = [
                     baseRef.child("orders").child("\(tableNumber)"),
                     baseRef.child("readyOrders").child("\(tableNumber)"),
                     baseRef.child("tables").child("\(tableNumber)")
                 ]
-
+                
                 for ref in pathsToRemove {
                     group.enter()
                     ref.removeValue { error, _ in
                         if let error = error {
-                            print("Ошибка при удалении \(ref): \(error.localizedDescription)")
+                            print("Ошибка удаления пути \(ref.key ?? ""): \(error.localizedDescription)")
                         }
                         group.leave()
                     }
                 }
-
+                
                 group.notify(queue: .main) {
-                    tables.remove(at: indexPath.row)
-                    saveTables(tables)
-                    
-                    if tables.isEmpty {
-                        self.emptyImageView.isHidden = false
-                    } else {
-                        self.emptyImageView.isHidden = true
+                    if indexPath.row < tables.count {
+                        tables.remove(at: indexPath.row)
+                        
+                        tableView.performBatchUpdates({
+                            tableView.deleteRows(at: [indexPath], with: .fade)
+                        }, completion: { _ in
+                            self.emptyImageView.isHidden = !tables.isEmpty
+                            completionHandler(true)
+                        })
                     }
-
-                    tableView.deleteRows(at: [indexPath], with: .automatic)
-                    completionHandler(true)
                 }
             }
             
             alert.addAction(cancelAction)
-            alert.addAction(deleteAction)
-            
+            alert.addAction(deleteConfirm)
             self.present(alert, animated: true)
         }
 
-        let updatePeopleCountAction = UIContextualAction(style: .normal, title: "Изменить") { _, _, completionHandler in
-            let alert = UIAlertController(title: "Изменить количество людей", message: "Введите новое количество людей за столом", preferredStyle: .alert)
+
+        let updatePeopleCountAction = UIContextualAction(style: .normal, title: "Изменить") { [weak self] _, _, completionHandler in
+            guard let self = self else { return }
+            let table = tables[indexPath.row]
+            let alert = UIAlertController(title: "Изменить количество людей", message: "Введите новое количество людей за столом №\(table.number)", preferredStyle: .alert)
+            
             alert.addTextField { textField in
                 textField.placeholder = "Количество людей"
                 textField.keyboardType = .numberPad
             }
 
             let saveAction = UIAlertAction(title: "Сохранить", style: .default) { _ in
-                if let countText = alert.textFields?.first?.text, let count = Int(countText), (1...6).contains(count) {
-                    if isBigger(count, tables[indexPath.row].personCount) {
+                guard let countText = alert.textFields?.first?.text,
+                      let count = Int(countText), (1...6).contains(count) else {
+                    let errorAlert = UIAlertController(title: "Ошибка", message: "Количество людей должно быть от 1 до 6.", preferredStyle: .alert)
+                    errorAlert.addAction (UIAlertAction(title: "OK", style: .default, handler: {_ in
+                        completionHandler(false)
+                    }))
+                    self.present(errorAlert, animated: true)
+                    return
+                }
+                
+                if count != table.personCount {
+                    tables[indexPath.row].personCount = count
+                    if count > tables[indexPath.row].maximumPersonCount {
                         tables[indexPath.row].maximumPersonCount = count
                     }
-                    tables[indexPath.row].personCount = count
-                    saveTables(tables)
-                    self.tableView.reloadData()
+                    
+                    updateTableData(cafeID, tables[indexPath.row]) {
+                        DispatchQueue.main.async {
+                            self.refreshData()
+                            completionHandler(true)
+                        }
+                    }
                 } else {
-                    let errorAlert = UIAlertController(title: "Ошибка", message: "Количество людей должно быть от 1 до 6.", preferredStyle: .alert)
-                    errorAlert.addAction(UIAlertAction(title: "Ок", style: .default))
-                    self.present(errorAlert, animated: true)
+                    completionHandler(true)
                 }
             }
 
+            let cancelAction = UIAlertAction(title: "Отмена", style: .cancel) { _ in
+                completionHandler(false)
+            }
+
             alert.addAction(saveAction)
-            alert.addAction(UIAlertAction(title: "Отмена", style: .cancel))
+            alert.addAction(cancelAction)
             self.present(alert, animated: true)
-            completionHandler(true)
         }
+
+        updatePeopleCountAction.backgroundColor = .systemMint
+        updatePeopleCountAction.image = UIImage(systemName: "square.and.pencil")
 
         let showOrderedProductsAction = UIContextualAction(style: .normal, title: "Заказы") { _, _, _ in
             self.tableIndex = indexPath.row

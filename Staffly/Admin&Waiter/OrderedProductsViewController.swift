@@ -11,31 +11,47 @@ class OrderedProductsViewController: UIViewController {
     
     @IBOutlet weak var tableView: UITableView!
     
-    var table: Table = Table(
-        number: 0,
-        personCount: 0,
-        maximumPersonCount: 0,
-        selectedProducts1: [],
-        selectedProducts2: [],
-        selectedProducts3: [],
-        selectedProducts4: [],
-        selectedProducts5: [],
-        selectedProducts6: [],
-        client1Bill: 0,
-        client2Bill: 0,
-        client3Bill: 0,
-        client4Bill: 0,
-        client5Bill: 0,
-        client6Bill: 0,
-        bill: 0
-    )
-
+    var table: Table = Table(number: 0, personCount: 0, maximumPersonCount: 0, currentPersonCount: 0, client1Bill: 0, client2Bill: 0, client3Bill: 0, client4Bill: 0, client5Bill: 0, client6Bill: 0, bill: 0, waiterID: "")
+    
+    var selectedProducts1: [SelectedProduct] = []
+    var selectedProducts2: [SelectedProduct] = []
+    var selectedProducts3: [SelectedProduct] = []
+    var selectedProducts4: [SelectedProduct] = []
+    var selectedProducts5: [SelectedProduct] = []
+    var selectedProducts6: [SelectedProduct] = []
+    
     private var allSelectedProducts: [SelectedProduct] = []
     private var productToClient: [Int] = [] // хранит номер клиента для каждого продукта
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        let cafeID = UserDefaults.standard.string(forKey: "cafeID")!
+        
+        loadSelectedProducts(cafeID, 1, table.number, completion: { selectedProductsData in
+            self.selectedProducts1 = selectedProductsData
+            loadSelectedProducts(cafeID, 2, self.table.number, completion: { selectedProductsData in
+                self.selectedProducts2 = selectedProductsData
+                loadSelectedProducts(cafeID, 3, self.table.number, completion: { selectedProductsData in
+                    self.selectedProducts3 = selectedProductsData
+                    loadSelectedProducts(cafeID, 4, self.table.number, completion: { selectedProductsData in
+                        self.selectedProducts4 = selectedProductsData
+                        loadSelectedProducts(cafeID, 5, self.table.number, completion: { selectedProductsData in
+                            self.selectedProducts5 = selectedProductsData
+                            loadSelectedProducts(cafeID, 6, self.table.number, completion: { selectedProductsData in
+                                self.selectedProducts6 = selectedProductsData
+                                self.tableView.reloadData()
+                            })
+                        })
+                    })
+                })
+            })
+        })
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-
+        
         tableView.delegate = self
         tableView.dataSource = self
         
@@ -43,18 +59,18 @@ class OrderedProductsViewController: UIViewController {
         
         combineSelectedProducts()
     }
-
+    
     private func combineSelectedProducts() {
         allSelectedProducts.removeAll()
         productToClient.removeAll()
         
         let clientsProducts = [
-            table.selectedProducts1,
-            table.selectedProducts2,
-            table.selectedProducts3,
-            table.selectedProducts4,
-            table.selectedProducts5,
-            table.selectedProducts6
+            selectedProducts1,
+            selectedProducts2,
+            selectedProducts3,
+            selectedProducts4,
+            selectedProducts5,
+            selectedProducts6
         ]
         
         for (index, products) in clientsProducts.enumerated() {

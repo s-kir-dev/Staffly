@@ -135,15 +135,17 @@ struct SelectedProduct: Codable, Hashable {
 
 struct Table: Codable, Equatable {
     let number: Int
+    
     var personCount: Int
     var maximumPersonCount: Int
+    var currentPersonCount: Int
     
-    var selectedProducts1: [SelectedProduct] = []
-    var selectedProducts2: [SelectedProduct] = []
-    var selectedProducts3: [SelectedProduct] = []
-    var selectedProducts4: [SelectedProduct] = []
-    var selectedProducts5: [SelectedProduct] = []
-    var selectedProducts6: [SelectedProduct] = []
+//    var selectedProducts1: [SelectedProduct] = []
+//    var selectedProducts2: [SelectedProduct] = []
+//    var selectedProducts3: [SelectedProduct] = []
+//    var selectedProducts4: [SelectedProduct] = []
+//    var selectedProducts5: [SelectedProduct] = []
+//    var selectedProducts6: [SelectedProduct] = []
     
     var client1Bill: Double
     var client2Bill: Double
@@ -153,6 +155,8 @@ struct Table: Codable, Equatable {
     var client6Bill: Double
     
     var bill: Double
+    
+    var waiterID: String
     
     static func == (lhs: Table, rhs: Table) -> Bool {
         lhs.number == rhs.number
@@ -167,6 +171,7 @@ struct Message: Hashable {
 }
 
 var tables: [Table] = []
+var tableNumbers: [Int] = []
 var messages: [Message] = []
 var myOrders: [ReadyOrder] = []
 
@@ -460,14 +465,13 @@ func generateCafeID(name: String, address: String, completion: @escaping (String
             db.child("Places").child(cafeID).child("info").setValue(["name": name, "address": address])
             debugPrint("Создан CafeID для \(name): \(cafeID)")
             UserDefaults.standard.set(cafeID, forKey: "cafeID")
-            UserDefaults.standard.set(name, forKey: "cafeName")
             
             completion(cafeID)
         }
     }
 }
 
-func generatePersonalID(_ cafeID: String, _ name: String, _ surname: String, _ role: String, _ email: String, _ password: String) -> String {
+func generatePersonalID(_ cafeID: String, _ name: String, _ surname: String, _ role: String, _ email: String, _ password: String, cafeName: String) -> String {
     let selfID = UUID().uuidString
         db.child("Places").child(cafeID).child("employees").child(selfID).setValue([
             "name": name,
@@ -477,18 +481,19 @@ func generatePersonalID(_ cafeID: String, _ name: String, _ surname: String, _ r
             "password": password
         ])
     debugPrint("Создан код для \(role)а \(name) \(surname): id: \(selfID), email: \(email), password: \(password)")
-    saveToUserDefaults(name, surname, cafeID, selfID, role)
+    saveToUserDefaults(name, surname, cafeID, selfID, role, cafeName)
     return selfID
 }
 
-func saveToUserDefaults(_ name: String, _ surname: String, _ cafeID: String, _ selfID: String, _ role: String) {
+func saveToUserDefaults(_ name: String, _ surname: String, _ cafeID: String, _ selfID: String, _ role: String, _ cafeName: String) {
     UserDefaults.standard.set(0.00, forKey: "tips")
     UserDefaults.standard.set(name, forKey: "userName")
     UserDefaults.standard.set(surname, forKey: "userSurname")
     UserDefaults.standard.set(cafeID, forKey: "cafeID")
     UserDefaults.standard.set(selfID, forKey: "selfID")
     UserDefaults.standard.set(role, forKey: "role")
-    debugPrint("Записал в UD name: \(name), surname: \(surname), cafeID: \(cafeID), selfID: \(selfID), role: \(role)")
+    UserDefaults.standard.set(name, forKey: "cafeName")
+    debugPrint("Записал в UD name: \(cafeName), surname: \(surname), cafeID: \(cafeID), selfID: \(selfID), role: \(role)")
 }
 
 func deleteUserFromUserDefaults() {
@@ -498,27 +503,225 @@ func deleteUserFromUserDefaults() {
     UserDefaults.standard.removeObject(forKey: "cafeID")
     UserDefaults.standard.removeObject(forKey: "selfID")
     UserDefaults.standard.removeObject(forKey: "role")
+    UserDefaults.standard.removeObject(forKey: "cafeName")
     debugPrint("Данные о пользователе и кафе удалены")
 }
 
 
-// Сохранение массива столов
-func saveTables(_ tables: [Table]) {
-    if let data = try? JSONEncoder().encode(tables) {
-        UserDefaults.standard.set(data, forKey: "tables")
+func removeTable(_ cafeID: String, _ selfID: String, _ table: Table, completion: @escaping () -> ()) {
+    let tablesRef = db.child("Places").child(cafeID).child("employees").child(selfID).child("tables")
+    
+    tablesRef.runTransactionBlock({ (currentData: MutableData) -> TransactionResult in
+        var items = currentData.value as? [Int] ?? []
+        
+        if let index = items.firstIndex(of: table.number) {
+            items.remove(at: index)
+            currentData.value = items
+            return TransactionResult.success(withValue: currentData)
+        } else {
+            return TransactionResult.success(withValue: currentData)
+        }
+    }) { error, committed, snapshot in
+        if let error = error {
+            print("Ошибка транзакции: \(error.localizedDescription)")
+        }
+        DispatchQueue.main.async {
+            completion()
+        }
     }
 }
 
-// Загрузка массива столов
-func loadTables() -> [Table] {
-    if let data = UserDefaults.standard.data(forKey: "tables"),
-       let savedTables = try? JSONDecoder().decode([Table].self, from: data) {
-        return savedTables
+
+func updateTableData(_ cafeID: String, _ table: Table, completion: @escaping ()->()) {
+    db.child("Places").child(cafeID).child("tables").child("\(table.number)").updateChildValues([
+        "tableNumber": table.number,
+        "personCount": table.personCount,
+        "maximumPersonCount": table.maximumPersonCount,
+        "client1Bill": table.client1Bill,
+        "client2Bill": table.client2Bill,
+        "client3Bill": table.client3Bill,
+        "client4Bill": table.client4Bill,
+        "client5Bill": table.client5Bill,
+        "client6Bill": table.client6Bill,
+        "bill": table.bill
+    ]) { _,_ in 
+        completion()
     }
-    return []
 }
 
-func saveMyOrders(_ orders: [ReadyOrder]) {
+func loadTables(_ cafeID: String, _ selfID: String, _ tableNumbers: [Int], completion: @escaping ([Table]) -> ()) {
+    var tablesData: [Table] = []
+    let group = DispatchGroup()
+
+    for number in tableNumbers {
+        group.enter()
+        db.child("Places").child(cafeID).child("tables").child("\(number)").observeSingleEvent(of: .value, with: { snapshot in
+            
+            if let dict = snapshot.value as? [String: Any] {
+                let table = Table(
+                    number: dict["tableNumber"] as? Int ?? 0,
+                    personCount: dict["personCount"] as? Int ?? 0,
+                    maximumPersonCount: dict["maximumPersonCount"] as? Int ?? 0,
+                    currentPersonCount: dict["currentPersonCount"] as? Int ?? 0,
+                    client1Bill: dict["client1Bill"] as? Double ?? 0,
+                    client2Bill: dict["client2Bill"] as? Double ?? 0,
+                    client3Bill: dict["client3Bill"] as? Double ?? 0,
+                    client4Bill: dict["client4Bill"] as? Double ?? 0,
+                    client5Bill: dict["client5Bill"] as? Double ?? 0,
+                    client6Bill: dict["client6Bill"] as? Double ?? 0,
+                    bill: dict["bill"] as? Double ?? 0,
+                    waiterID: dict["waiterID"] as? String ?? ""
+                )
+                tablesData.append(table)
+            }
+            
+            group.leave()
+        })
+    }
+    
+    group.notify(queue: .main) {
+        let sortedTables = tablesData.sorted { $0.number < $1.number }
+        completion(sortedTables)
+    }
+}
+
+
+func loadSelectedProducts(_ cafeID: String, _ clientNumber: Int, _ tableNumber: Int, completion: @escaping ([SelectedProduct]) -> Void) {
+    let selectedProductsRef = db.child("Places").child(cafeID).child("tables").child("\(tableNumber)").child("clients").child("client\(clientNumber)").child("orders")
+    
+    selectedProductsRef.observeSingleEvent(of: .value, with: { snapshot in
+        var selectedProducts: [SelectedProduct] = []
+        let group = DispatchGroup()
+        
+        for child in snapshot.children {
+            if let snap = child as? DataSnapshot, let dict = snap.value as? [String: Any] {
+                let productDict = dict
+                
+                let selectedProduct = SelectedProduct(
+                    product: Product(
+                        id: productDict["id"] as? String ?? "",
+                        menuNumber: productDict["menuNumber"] as? Int ?? 0,
+                        productCategory: productDict["productCategory"] as? String ?? "",
+                        productDescription: productDict["productDescription"] as? String ?? "",
+                        productImageURL: productDict["productImageURL"] as? String ?? "",
+                        productName: productDict["productName"] as? String ?? "",
+                        productPrice: productDict["productPrice"] as? Double ?? 0,
+                        additionWishes: productDict["additionWishes"] as? String ?? "",
+                        weight: productDict["weight"] as? Int ?? 0,
+                        ccal: productDict["ccal"] as? Int ?? 0
+                    ),
+                    sharedWith: productDict["sharedWith"] as? [Int] ?? [],
+                    quantity: productDict["quantity"] as? Int ?? 0
+                )
+                selectedProducts.append(selectedProduct)
+            }
+        }
+        // Возвращаем данные только после того, как цикл завершен
+        completion(selectedProducts)
+    })
+}
+
+
+func orderProductsClient(_ cafeID: String, _ tableNumber: Int, _ clientNumber: Int, _ summa: Double, _ products: [SelectedProduct], completion: @escaping () -> Void) {
+    let group = DispatchGroup()
+    
+    let cookRef = db.child("Places").child(cafeID).child("orders").child("\(tableNumber)")
+    let clientRef = db.child("Places").child(cafeID).child("tables").child("\(tableNumber)").child("clients").child("client\(clientNumber)")
+    let clientOrdersRef = clientRef.child("orders")
+    
+    for selectedProduct in products {
+        for _ in 1...selectedProduct.quantity {
+            group.enter()
+            //let orderItemID = (auth.currentUser?.uid ?? "") + UUID().uuidString
+            cookRef.child(UUID().uuidString).setValue([
+                "a tableNumber": tableNumber,
+                "b clientNumber": clientNumber,
+                "id": selectedProduct.product.id,
+                "menuNumber": selectedProduct.product.menuNumber,
+                "productCategory": selectedProduct.product.productCategory,
+                "productName": selectedProduct.product.productName,
+                "productDescription": selectedProduct.product.productDescription,
+                "productPrice": selectedProduct.product.productPrice,
+                "productImageURL": selectedProduct.product.productImageURL,
+                "rating": 0,
+                "myRating": 0,
+                "additionWishes": selectedProduct.product.additionWishes,
+                "placeName": "Ля салют",
+                "weight": selectedProduct.product.weight,
+                "ccal": selectedProduct.product.ccal,
+                
+                "sharedWith": selectedProduct.sharedWith,
+                "quantity": selectedProduct.quantity,
+                
+                "status": "Отправлен"
+            ]) { _, _ in
+                group.leave()
+            }
+        }
+    }
+    
+    for selectedProduct in products {
+        group.enter()
+        let productRef = clientOrdersRef.child(selectedProduct.product.id)
+        
+        productRef.observeSingleEvent(of: .value, with: { snapshot in
+            if snapshot.exists(), let productData = snapshot.value as? [String: Any], let oldQty = productData["quantity"] as? Int {
+                let newQty = oldQty + selectedProduct.quantity
+                productRef.updateChildValues(["quantity": newQty]) { _, _ in
+                    group.leave()
+                }
+            } else {
+                let newProductData: [String: Any] = [
+                    "id": selectedProduct.product.id,
+                    "menuNumber": selectedProduct.product.menuNumber,
+                    "productCategory": selectedProduct.product.productCategory,
+                    "productName": selectedProduct.product.productName,
+                    "productDescription": selectedProduct.product.productDescription,
+                    "productPrice": selectedProduct.product.productPrice,
+                    "productImageURL": selectedProduct.product.productImageURL,
+                    "rating": 0,
+                    "myRating": 0,
+                    "additionWishes": selectedProduct.product.additionWishes,
+                    "placeName": "Ля салют",
+                    "weight": selectedProduct.product.weight,
+                    "ccal": selectedProduct.product.ccal,
+                    
+                    "sharedWith": selectedProduct.sharedWith,
+                    "quantity": selectedProduct.quantity,
+                    
+                    "status": "Отправлен"
+                ]
+                productRef.updateChildValues(newProductData) { _, _ in
+                    group.leave()
+                }
+            }
+        })
+    }
+    
+    group.enter()
+    clientRef.updateChildValues([
+        "bill": ServerValue.increment(NSNumber(value: summa))
+    ]) { _, _ in
+        group.leave()
+    }
+    
+    
+    let tableRef = db.child("Places").child(cafeID).child("tables").child("\(tableNumber)")
+    
+    group.enter()
+    tableRef.updateChildValues([
+        "bill": ServerValue.increment(NSNumber(value: summa)),
+        "client\(clientNumber)Bill": ServerValue.increment(NSNumber(value: summa))
+    ]) { _, _ in
+        group.leave()
+    }
+    
+    group.notify(queue: .main) {
+        completion()
+    }
+}
+
+func saveMyOrders(_ orders: [ReadyOrder]) { // сохранение взятых поваром блюд
     if let encoded = try? JSONEncoder().encode(orders) {
         UserDefaults.standard.set(encoded, forKey: "myOrders")
     }
@@ -544,6 +747,14 @@ extension Double {
         return (self * multiplier).rounded() / multiplier
     }
 }
+
+extension Double {
+    func roundUp(toPlaces places: Int = 2) -> Double {
+        let multiplier = pow(10.0, Double(places))
+        return ceil(self * multiplier) / multiplier
+    }
+}
+
 
 extension Array where Element == SelectedProduct {
     var sum: Double {

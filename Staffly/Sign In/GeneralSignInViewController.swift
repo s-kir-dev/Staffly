@@ -106,7 +106,7 @@ class GeneralSignInViewController: UIViewController {
                 let userRole = user["role"] as? String ?? "Worker"
                 let userID = foundID ?? ""
                 
-                saveToUserDefaults(userName, userSurname, cafeID, userID, userRole)
+                saveToUserDefaults(userName, userSurname, cafeID, userID, userRole, cafeName)
                 
                 UserDefaults.standard.set(cafeName, forKey: "cafeName")
                 UserDefaults.standard.synchronize()

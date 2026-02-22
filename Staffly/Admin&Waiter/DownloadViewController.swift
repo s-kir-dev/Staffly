@@ -65,6 +65,26 @@ class DownloadViewController: UIViewController {
                 group.leave()
             }
             
+            if let cafeID = UserDefaults.standard.string(forKey: "cafeID"),
+               let selfID = UserDefaults.standard.string(forKey: "selfID") {
+                
+                group.enter()
+                
+                let tablesRef = db.child("Places").child(cafeID).child("employees").child(selfID).child("tables")
+                
+                tablesRef.observeSingleEvent(of: .value) { snapshot in
+                    let items = snapshot.value as? [Int] ?? []
+                    tableNumbers = items
+                    print("В employees есть такие номера столов: \(tableNumbers)")
+                    
+                    loadTables(cafeID, selfID, tableNumbers) { tablesData in
+                        tables = tablesData
+                        group.leave()
+                    }
+                }
+            }
+
+            
             group.notify(queue: .global(qos: .userInitiated)) {
                 let profileImageName = selfID
 
@@ -128,7 +148,6 @@ class DownloadViewController: UIViewController {
                 }
                 
                 imageGroup.notify(queue: .main) {
-                    tables = loadTables()
                     menu.sort(by: { $0.menuNumber < $1.menuNumber })
                     globalImageCache = imageCache
                     debugPrint("✅ Загружено \(menu.count) продуктов, \(globalImageCache.count) изображений. Должность: \(self.role)")

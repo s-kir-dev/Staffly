@@ -149,7 +149,7 @@ class SignInViewController: UIViewController {
                         UserDefaults.standard.set(finalCafeName, forKey: "cafeName")
                     }
                     
-                    let userID = generatePersonalID(cafeIDText, nameText, surnameText, roleForUser, email, password)
+                    let userID = generatePersonalID(cafeIDText, nameText, surnameText, roleForUser, email, password, cafeName: cafeNameFound ?? "Имя Кафе")
                     debugPrint("Пользователь создан с ID: \(userID) для кафе: \(cafeNameFound ?? "Unknown")")
                     
                     self.performSegue(withIdentifier: "StartVC", sender: self)

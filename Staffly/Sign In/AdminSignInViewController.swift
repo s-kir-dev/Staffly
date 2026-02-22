@@ -190,7 +190,7 @@ class AdminSignInViewController: UIViewController {
                             }
                             
                             if codeValid {
-                                debugPrint(generatePersonalID(cafeID, nameText, surnameText, roleForUser ?? "Worker", email, password))
+                                debugPrint(generatePersonalID(cafeID, nameText, surnameText, roleForUser ?? "Worker", email, password, cafeName: cafeNameText))
                                 UserDefaults.standard.set(foundCafeName ?? cafeNameText, forKey: "cafeName")
                                 self.performSegue(withIdentifier: "AdminStartVC", sender: self)
                             } else {
@@ -199,7 +199,7 @@ class AdminSignInViewController: UIViewController {
                         }
                     } else {
                         // Кафе есть, но админа в нем еще нет
-                        debugPrint(generatePersonalID(cafeID, nameText, surnameText, "Admin", email, password))
+                        debugPrint(generatePersonalID(cafeID, nameText, surnameText, "Admin", email, password, cafeName: cafeNameText))
                         UserDefaults.standard.set(foundCafeName ?? cafeNameText, forKey: "cafeName")
                         self.performSegue(withIdentifier: "AdminStartVC", sender: self)
                     }
@@ -210,7 +210,7 @@ class AdminSignInViewController: UIViewController {
                 self.inviteCodeTextField.isHidden = true
                 
                 generateCafeID(name: cafeNameText, address: cafeAdressText) { newCafeID in
-                    print(generatePersonalID(newCafeID, nameText, surnameText, "Admin", email, password))
+                    print(generatePersonalID(newCafeID, nameText, surnameText, "Admin", email, password, cafeName: cafeNameText))
                     UserDefaults.standard.set(cafeNameText, forKey: "cafeName")
                     self.performSegue(withIdentifier: "AdminStartVC", sender: self)
                 }

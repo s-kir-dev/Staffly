@@ -49,38 +49,45 @@ class CreateTableViewController: UIViewController {
         
         checkTableNumberExisting(tableNumber, cafeID, completion: {
             existingTableNumber in
-            if !existingTableNumber {
-                let cafeID = UserDefaults.standard.string(forKey: "cafeID") ?? ""
-                let selfID = UserDefaults.standard.string(forKey: "selfID") ?? ""
+            if !existingTableNumber, let cafeID = UserDefaults.standard.string(forKey: "cafeID"),
+                let selfID = UserDefaults.standard.string(forKey: "selfID") {
                 
                 let qrImage = generateTableQR(cafeID, tableNumber, personCount, selfID)
                 
-                db.child("Places").child(self.cafeID).child("tables").child("\(tableNumber)").setValue([
-                    "tableNumber": tableNumber,
-                    "personCount": personCount
-                ])
+                let tablesRef = db.child("Places").child(cafeID).child("employees").child(selfID).child("tables")
+
+                tablesRef.runTransactionBlock({ (currentData: MutableData) -> TransactionResult in
+                    var numbers = currentData.value as? [Int] ?? []
+                    
+                    if !numbers.contains(tableNumber) {
+                        numbers.append(tableNumber)
+                    }
+                    
+                    currentData.value = numbers
+                    
+                    return TransactionResult.success(withValue: currentData)
+                })
+
                 
                 let newTable = Table(
                     number: tableNumber,
                     personCount: personCount,
                     maximumPersonCount: personCount,
-                    selectedProducts1: [],
-                    selectedProducts2: [],
-                    selectedProducts3: [],
-                    selectedProducts4: [],
-                    selectedProducts5: [],
-                    selectedProducts6: [],
+                    currentPersonCount: 0,
                     client1Bill: 0,
                     client2Bill: 0,
                     client3Bill: 0,
                     client4Bill: 0,
                     client5Bill: 0,
                     client6Bill: 0,
-                    bill: 0
+                    bill: 0,
+                    waiterID: selfID
                 )
-                
-                tables.append(newTable)
-                saveTables(tables)
+                                
+                updateTableData(cafeID, newTable) {
+                    tableNumbers.append(tableNumber)
+                    tables.append(newTable)
+                }
                 
                 let alert = UIAlertController(
                     title: "Успешно!",

@@ -52,24 +52,7 @@ class BillViewController: UIViewController {
     @IBOutlet weak var detailButton: UIButton!
     @IBOutlet weak var doneButton: UIButton!
     
-    var table: Table = Table(
-        number: 0,
-        personCount: 0,
-        maximumPersonCount: 0,
-        selectedProducts1: [],
-        selectedProducts2: [],
-        selectedProducts3: [],
-        selectedProducts4: [],
-        selectedProducts5: [],
-        selectedProducts6: [],
-        client1Bill: 0,
-        client2Bill: 0,
-        client3Bill: 0,
-        client4Bill: 0,
-        client5Bill: 0,
-        client6Bill: 0,
-        bill: 0
-    )
+    var table: Table = Table(number: 0, personCount: 0, maximumPersonCount: 0, currentPersonCount: 0, client1Bill: 0, client2Bill: 0, client3Bill: 0, client4Bill: 0, client5Bill: 0, client6Bill: 0, bill: 0, waiterID: "")
     
     var finalTableBill = 0.0
     
@@ -258,8 +241,9 @@ class BillViewController: UIViewController {
                 updatedEmployee.cafeProfit += self.table.bill
 
                 uploadUserData(cafeID, selfID, updatedEmployee) { _ in
-                    tables.remove(at: tableIndex)
-                    saveTables(tables)
+                    removeTable(cafeID, selfID, tables[tableIndex], completion: {
+                        tables.remove(at: tableIndex)
+                    })
                     
                     alert.dismiss(animated: true) {
                         self.navigationController?.popViewController(animated: true)
