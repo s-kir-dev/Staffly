@@ -129,6 +129,7 @@ class ProfileViewController: UIViewController {
             inviteCodesButton.isHidden = true
             cafeIDLabel.isHidden = true
             summaTipsLabel.text = "Блюд приготовлено: \(employee.productsCount)"
+            self.navigationItem.leftBarButtonItem = nil
         default: break
         }
         

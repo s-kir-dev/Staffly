@@ -81,7 +81,7 @@ class TablesViewController: UIViewController {
             }
         } else if segue.identifier == "billVC" {
             if let billVC = segue.destination as? BillViewController {
-                billVC.table = tables[tableIndex]
+                billVC.tableIndex = tableIndex
             }
         }
     }

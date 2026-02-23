@@ -52,21 +52,59 @@ class BillViewController: UIViewController {
     @IBOutlet weak var detailButton: UIButton!
     @IBOutlet weak var doneButton: UIButton!
     
-    var table: Table = Table(number: 0, personCount: 0, maximumPersonCount: 0, currentPersonCount: 0, client1Bill: 0, client2Bill: 0, client3Bill: 0, client4Bill: 0, client5Bill: 0, client6Bill: 0, bill: 0, waiterID: "")
+    let loadingIndicator = UIActivityIndicatorView(style: .large)
+            
+    var tableIndex: Int = 0
+    
+    var tableData: Table = Table(number: 0, personCount: 0, maximumPersonCount: 0, currentPersonCount: 0, client1Bill: 0, client2Bill: 0, client3Bill: 0, client4Bill: 0, client5Bill: 0, client6Bill: 0, bill: 0, waiterID: "")
     
     var finalTableBill = 0.0
     
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        loadingIndicator.center = view.center
+        loadingIndicator.hidesWhenStopped = true
+        view.addSubview(loadingIndicator)
+        
+        loadingIndicator.startAnimating()
+        guard let cafeID = UserDefaults.standard.string(forKey: "cafeID"),
+              let selfID = UserDefaults.standard.string(forKey: "selfID") else {
+            loadingIndicator.stopAnimating()
+            return
+        }
+        
+        let tablesRef = db.child("Places").child(cafeID).child("employees").child(selfID).child("tables")
+        
+        tablesRef.observeSingleEvent(of: .value, with: { snapshot in
+            let newTableNumbers = snapshot.value as? [Int] ?? []
+            tableNumbers = newTableNumbers
+            
+            loadTables(cafeID, selfID, newTableNumbers) { fetchedTables in
+                let sortedTables = fetchedTables.sorted { $0.number < $1.number }
+                tables = sortedTables
+                
+                tableNumbers = sortedTables.map { $0.number }
+                
+                DispatchQueue.main.async {
+                    self.tableData = tables[self.tableIndex]
+                    self.setupUI()
+                    self.loadingIndicator.stopAnimating()
+                    debugPrint("✅ Данные обновлены: столы \(tableNumbers)")
+                }
+            }
+        })
+    }
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        setupUI()
         
         detailButton.addTarget(self, action: #selector(detailButtonTapped), for: .touchUpInside)
         doneButton.addTarget(self, action: #selector(doneButtonTapped), for: .touchUpInside)
     }
     
     func setupUI() {
-        finalTableBill = table.bill
+        finalTableBill = tableData.bill
         
         let clientLabels: [UILabel] = [UILabel(), client2Label, client3Label, client4Label, client5Label, client6Label]
         let clientBillLabels: [UILabel] = [client1BillLabel, client2BillLabel, client3BillLabel, client4BillLabel, client5BillLabel, client6BillLabel]
@@ -74,7 +112,7 @@ class BillViewController: UIViewController {
         let clientFinalBillLabels: [UILabel] = [client1FinalBillLabel, client2FinalBillLabel, client3FinalBillLabel, client4FinalBillLabel, client5FinalBillLabel, client6FinalBillLabel]
         let sliders: [UISlider] = [UISlider(), tipsSlider2, tipsSlider3, tipsSlider4, tipsSlider5, tipsSlider6]
         
-        for index in 0..<table.maximumPersonCount { // обновление UI после изменения количества клиентов
+        for index in 0..<tableData.maximumPersonCount { // обновление UI после изменения количества клиентов
             clientLabels[index].isHidden = false
             clientBillLabels[index].isHidden = false
             clientTipsLabels[index].isHidden = false
@@ -82,7 +120,7 @@ class BillViewController: UIViewController {
             sliders[index].isHidden = false
         }
         
-        for index in table.maximumPersonCount..<6 {
+        for index in tableData.maximumPersonCount..<6 {
             clientLabels[index].isHidden = true
             clientBillLabels[index].isHidden = true
             clientTipsLabels[index].isHidden = true
@@ -90,21 +128,21 @@ class BillViewController: UIViewController {
             sliders[index].isHidden = true
         }
         
-        tableNumberLabel.text = "Стол №\(table.number)"
+        tableNumberLabel.text = "Стол №\(tableData.number)"
         
-        client1BillLabel.text = "\(table.client1Bill.roundValue())р."
-        client2BillLabel.text = "\(table.client2Bill.roundValue())р."
-        client3BillLabel.text = "\(table.client3Bill.roundValue())р."
-        client4BillLabel.text = "\(table.client4Bill.roundValue())р."
-        client5BillLabel.text = "\(table.client5Bill.roundValue())р."
-        client6BillLabel.text = "\(table.client6Bill.roundValue())р."
+        client1BillLabel.text = "\(tableData.client1Bill.roundValue())р."
+        client2BillLabel.text = "\(tableData.client2Bill.roundValue())р."
+        client3BillLabel.text = "\(tableData.client3Bill.roundValue())р."
+        client4BillLabel.text = "\(tableData.client4Bill.roundValue())р."
+        client5BillLabel.text = "\(tableData.client5Bill.roundValue())р."
+        client6BillLabel.text = "\(tableData.client6Bill.roundValue())р."
         
         for index in 0..<6 {
             clientFinalBillLabels[index].text = clientBillLabels[index].text
         }
         
-        tableBillLabel.text = "\(table.bill.roundValue())р."
-        tableFinalBillLabel.text = "\(table.bill.roundValue())р."
+        tableBillLabel.text = "\(tableData.bill.roundValue())р."
+        tableFinalBillLabel.text = "\(tableData.bill.roundValue())р."
     }
     
     @IBAction func tipsClient1Changed(_ sender: UISlider) {

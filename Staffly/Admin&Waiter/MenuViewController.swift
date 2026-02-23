@@ -21,34 +21,35 @@ class MenuViewController: UIViewController {
     var tableIndex: Int = 0
     var currentClient: Int = 0
     var selectedProducts: [SelectedProduct] = []
+    
+    // Словарь: ID блюда -> Список ID клиентов, между которыми оно делится
     var sharedDishes: [String: [Int]] = [:]
+    
+    // Массив блюд, выбранных в текущий заход (ДО отправки в БД)
     var orderedProducts: [Product] = []
-    var summa: Double = 0
+    
     var summaSelectedProducts: Double = 0
     var tappedProduct: Product = Product(id: "", menuNumber: 0, productCategory: "", productDescription: "", productImageURL: "", productName: "", productPrice: 0, additionWishes: "", weight: 0, ccal: 0)
 
     let searchController = UISearchController(searchResultsController: nil)
-    let loading = UIActivityIndicatorView(style: .large)
-    let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
-
     var allProducts: [Product] = menu
     var products: [Product] = []
+    
     var cafeID = UserDefaults.standard.string(forKey: "cafeID") ?? ""
-    let selfID = UserDefaults.standard.string(forKey: "selfID") ?? ""
-    let role = UserDefaults.standard.string(forKey: "role") ?? ""
 
-    let cloudinary = CloudinaryManager.shared
     let refreshControl = UIRefreshControl()
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        setupUI()
+        loadInitialData()
+    }
+
+    private func setupUI() {
         activityIndicatorView.hidesWhenStopped = true
         activityIndicatorView.center = view.center
         view.addSubview(activityIndicatorView)
-
-        // Первичный расчет суммы
-        updateSummaLabel()
 
         products = allProducts
         tableView.delegate = self
@@ -64,18 +65,21 @@ class MenuViewController: UIViewController {
         navigationItem.hidesSearchBarWhenScrolling = false
         searchController.searchBar.placeholder = "Введите название блюда"
         searchController.searchResultsUpdater = self
-        searchController.delegate = self
+        //searchController.delegate = self
+    }
 
-        // Загрузка данных из Firebase
+    private func loadInitialData() {
+        activityIndicatorView.startAnimating()
+        // Используем твой Helper-метод
         loadSelectedProducts(cafeID, currentClient, tableNumbers[tableIndex]) { [weak self] data in
             guard let self = self else { return }
             self.selectedProducts = data
             self.updateSummaLabel()
             self.tableView.reloadData()
+            self.activityIndicatorView.stopAnimating()
         }
     }
 
-    // Вспомогательный метод обновления Label
     func updateSummaLabel() {
         let total = selectedProducts.reduce(0) { $0 + ($1.product.productPrice * Double($1.quantity)) }
         summaSelectedProducts = total.roundUp()
@@ -95,34 +99,44 @@ class MenuViewController: UIViewController {
         super.viewWillDisappear(animated)
         guard self.isMovingFromParent else { return }
 
+        // Если ничего не выбрали — просто уходим
+        if orderedProducts.isEmpty { return }
+
         activityIndicatorView.startAnimating()
         let group = DispatchGroup()
-        var distribution: [Int: (products: [SelectedProduct], sum: Double)] = [:]
+        
+        // Группируем продукты для каждого клиента (участника заказа)
+        var distribution: [Int: [SelectedProduct]] = [:]
 
         for product in orderedProducts {
             let participants = sharedDishes[product.id] ?? [currentClient]
             let shareCount = Double(participants.count)
-            
-            // Делим цену и округляем ВВЕРХ
             let pricePerPerson = (product.productPrice / shareCount).roundUp()
             
             for clientIdx in participants {
                 var productCopy = product
                 productCopy.productPrice = pricePerPerson
-                let selected = SelectedProduct(product: productCopy, sharedWith: participants, quantity: 1)
                 
-                if distribution[clientIdx] != nil {
-                    distribution[clientIdx]!.products.append(selected)
-                    distribution[clientIdx]!.sum += pricePerPerson
+                if distribution[clientIdx] == nil { distribution[clientIdx] = [] }
+                
+                if let existingIdx = distribution[clientIdx]!.firstIndex(where: {
+                    $0.product.id == product.id && sameClients($0.sharedWith, participants)
+                }) {
+                    distribution[clientIdx]![existingIdx].quantity += 1
                 } else {
-                    distribution[clientIdx] = (products: [selected], sum: pricePerPerson)
+                    let newSelected = SelectedProduct(product: productCopy, sharedWith: participants, quantity: 1)
+                    distribution[clientIdx]!.append(newSelected)
                 }
             }
         }
 
-        for (clientIndex, data) in distribution {
+        // Вызываем твою функцию сохранения для каждого клиента
+        for (clientIndex, productsToSave) in distribution {
             group.enter()
-            orderProductsClient(cafeID, tableNumbers[tableIndex], clientIndex, data.sum.roundUp(), data.products) {
+            let clientSum = productsToSave.reduce(0) { $0 + ($1.product.productPrice * Double($1.quantity)) }
+            
+            // Используем твой orderProductsClient из Helper.swift
+            orderProductsClient(cafeID, tableNumbers[tableIndex], clientIndex, clientSum.roundUp(), productsToSave) {
                 group.leave()
             }
         }
@@ -166,7 +180,7 @@ class MenuViewController: UIViewController {
             self.filterMenuButton.setTitle(" Все категории", for: .normal)
             self.tableView.reloadData()
         }
-        filterMenuButton.menu = UIMenu(title: "Выберите категорию", children: [resetAction] + categoryActions)
+        filterMenuButton.menu = UIMenu(title: "Категории", children: [resetAction] + categoryActions)
         filterMenuButton.showsMenuAsPrimaryAction = true
     }
 
@@ -177,6 +191,7 @@ class MenuViewController: UIViewController {
     }
 }
 
+// MARK: - TableView Logic
 // MARK: - TableView Logic
 extension MenuViewController: UITableViewDelegate, UITableViewDataSource {
 
@@ -207,22 +222,22 @@ extension MenuViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "cell") as! ProductTableViewCell
         let product = products[indexPath.row]
-
+        
         cell.productSwitch.isOn = orderedProducts.contains(where: { $0.id == product.id })
         cell.menuNumberLabel.text = "\(product.menuNumber)"
-        cell.productImageView.clipsToBounds = true
-        cell.productImageView.layer.cornerRadius = 15
         cell.productImageView.image = globalImageCache[product.id] ?? UIImage(named: "блюдо")
+        cell.productImageView.layer.cornerRadius = 17
+        cell.productImageView.clipsToBounds = true
         cell.productNameLabel.text = product.productName
-        cell.productPriceLabel.text = String(format: "%.2fр.", product.productPrice)
-
+        cell.productPriceLabel.text = "\(product.productPrice.roundValue())р."
+        
         let currentShared = sharedDishes[product.id] ?? [currentClient]
         if self.selectedProducts.contains(where: { $0.product.id == product.id && sameClients($0.sharedWith, currentShared) }) {
             cell.backgroundColor = UIColor(red: 0.796, green: 0.874, blue: 0.811, alpha: 0.5)
         } else {
             cell.backgroundColor = .white
         }
-
+        
         cell.switchAction = {
             if cell.productSwitch.isOn {
                 self.orderedProducts.append(product)
@@ -236,14 +251,15 @@ extension MenuViewController: UITableViewDelegate, UITableViewDataSource {
             } else {
                 self.orderedProducts.removeAll(where: { $0.id == product.id })
                 let clients = self.sharedDishes[product.id] ?? [self.currentClient]
-                let sharePrice = (product.productPrice / Double(clients.count)).roundUp()
-                
-                var productCopy = product
-                productCopy.productPrice = sharePrice
-                self.removeProductFromCurrentClient(productCopy, qty: 1, sharedWith: clients)
+                self.selectedProducts.removeAll(where: { $0.product.id == product.id && self.sameClients($0.sharedWith, clients) })
+                self.updateSummaLabel()
                 cell.backgroundColor = .white
             }
         }
+        
+        cell.layer.cornerRadius = 15
+        cell.selectionStyle = .none
+        
         return cell
     }
 
@@ -332,7 +348,8 @@ extension MenuViewController: UITableViewDelegate, UITableViewDataSource {
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat { 130 }
 }
 
-extension MenuViewController: UISearchResultsUpdating, UISearchControllerDelegate {
+
+extension MenuViewController: UISearchResultsUpdating {
     func updateSearchResults(for searchController: UISearchController) {
         let text = searchController.searchBar.text?.lowercased() ?? ""
         var filtered = selectedCategory.isEmpty ? allProducts : allProducts.filter { $0.productCategory == selectedCategory }

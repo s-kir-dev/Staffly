@@ -27,38 +27,40 @@ class OrderedProductsViewController: UIViewController {
         super.viewWillAppear(animated)
         
         let cafeID = UserDefaults.standard.string(forKey: "cafeID")!
+        let group = DispatchGroup()
         
-        loadSelectedProducts(cafeID, 1, table.number, completion: { selectedProductsData in
-            self.selectedProducts1 = selectedProductsData
-            loadSelectedProducts(cafeID, 2, self.table.number, completion: { selectedProductsData in
-                self.selectedProducts2 = selectedProductsData
-                loadSelectedProducts(cafeID, 3, self.table.number, completion: { selectedProductsData in
-                    self.selectedProducts3 = selectedProductsData
-                    loadSelectedProducts(cafeID, 4, self.table.number, completion: { selectedProductsData in
-                        self.selectedProducts4 = selectedProductsData
-                        loadSelectedProducts(cafeID, 5, self.table.number, completion: { selectedProductsData in
-                            self.selectedProducts5 = selectedProductsData
-                            loadSelectedProducts(cafeID, 6, self.table.number, completion: { selectedProductsData in
-                                self.selectedProducts6 = selectedProductsData
-                                self.tableView.reloadData()
-                            })
-                        })
-                    })
-                })
-            })
-        })
+        var results: [Int: [SelectedProduct]] = [:]
+        
+        for i in 1...6 {
+            group.enter()
+            loadSelectedProducts(cafeID, i, table.number) { products in
+                results[i] = products
+                group.leave()
+            }
+        }
+        
+        group.notify(queue: .main) { [weak self] in
+            guard let self = self else { return }
+            
+            self.selectedProducts1 = results[1] ?? []
+            self.selectedProducts2 = results[2] ?? []
+            self.selectedProducts3 = results[3] ?? []
+            self.selectedProducts4 = results[4] ?? []
+            self.selectedProducts5 = results[5] ?? []
+            self.selectedProducts6 = results[6] ?? []
+            
+            self.combineSelectedProducts()
+            self.tableView.reloadData()
+        }
     }
-    
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         tableView.delegate = self
         tableView.dataSource = self
-        
         navigationItem.title = "Заказанные блюда стола №\(table.number)"
-        
-        combineSelectedProducts()
     }
+
     
     private func combineSelectedProducts() {
         allSelectedProducts.removeAll()

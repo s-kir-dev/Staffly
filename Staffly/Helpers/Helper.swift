@@ -591,11 +591,9 @@ func loadSelectedProducts(_ cafeID: String, _ clientNumber: Int, _ tableNumber: 
     
     selectedProductsRef.observeSingleEvent(of: .value, with: { snapshot in
         var selectedProducts: [SelectedProduct] = []
-        let group = DispatchGroup()
         
         for child in snapshot.children {
-            if let snap = child as? DataSnapshot, let dict = snap.value as? [String: Any] {
-                let productDict = dict
+            if let snap = child as? DataSnapshot, let productDict = snap.value as? [String: Any] {
                 
                 let selectedProduct = SelectedProduct(
                     product: Product(
@@ -605,7 +603,7 @@ func loadSelectedProducts(_ cafeID: String, _ clientNumber: Int, _ tableNumber: 
                         productDescription: productDict["productDescription"] as? String ?? "",
                         productImageURL: productDict["productImageURL"] as? String ?? "",
                         productName: productDict["productName"] as? String ?? "",
-                        productPrice: productDict["productPrice"] as? Double ?? 0,
+                        productPrice: productDict["productPrice"] as? Double ?? 0.0,
                         additionWishes: productDict["additionWishes"] as? String ?? "",
                         weight: productDict["weight"] as? Int ?? 0,
                         ccal: productDict["ccal"] as? Int ?? 0
@@ -616,10 +614,13 @@ func loadSelectedProducts(_ cafeID: String, _ clientNumber: Int, _ tableNumber: 
                 selectedProducts.append(selectedProduct)
             }
         }
-        // Возвращаем данные только после того, как цикл завершен
-        completion(selectedProducts)
+        
+        DispatchQueue.main.async {
+            completion(selectedProducts)
+        }
     })
 }
+
 
 
 func orderProductsClient(_ cafeID: String, _ tableNumber: Int, _ clientNumber: Int, _ summa: Double, _ products: [SelectedProduct], completion: @escaping () -> Void) {
@@ -662,7 +663,11 @@ func orderProductsClient(_ cafeID: String, _ tableNumber: Int, _ clientNumber: I
     
     for selectedProduct in products {
         group.enter()
-        let productRef = clientOrdersRef.child(selectedProduct.product.id)
+        
+        // массив [1, 2] в строку "1-2"
+        let sharedString = selectedProduct.sharedWith.isEmpty ? "\(clientNumber)" : selectedProduct.sharedWith.map { String($0) }.joined(separator: "-")
+        
+        let productRef = clientOrdersRef.child("\(tableNumber)-\(sharedString)-\(selectedProduct.product.id)")
         
         productRef.observeSingleEvent(of: .value, with: { snapshot in
             if snapshot.exists(), let productData = snapshot.value as? [String: Any], let oldQty = productData["quantity"] as? Int {
@@ -679,16 +684,11 @@ func orderProductsClient(_ cafeID: String, _ tableNumber: Int, _ clientNumber: I
                     "productDescription": selectedProduct.product.productDescription,
                     "productPrice": selectedProduct.product.productPrice,
                     "productImageURL": selectedProduct.product.productImageURL,
-                    "rating": 0,
-                    "myRating": 0,
                     "additionWishes": selectedProduct.product.additionWishes,
-                    "placeName": "Ля салют",
                     "weight": selectedProduct.product.weight,
                     "ccal": selectedProduct.product.ccal,
-                    
                     "sharedWith": selectedProduct.sharedWith,
                     "quantity": selectedProduct.quantity,
-                    
                     "status": "Отправлен"
                 ]
                 productRef.updateChildValues(newProductData) { _, _ in
