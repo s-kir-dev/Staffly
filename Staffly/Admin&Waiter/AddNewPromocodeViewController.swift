@@ -49,7 +49,9 @@ class AddNewPromocodeViewController: UIViewController {
         }
         
         db.child("Places").child(cafeID).child("sales").child("promocodes").child(promocode).setValue([
-            promocode: "\(price) \(value)"
+            "name": "\(promocode)",
+            "price": price,
+            "value": "\(value)"
         ]) { error, _ in
             let alert = UIAlertController(title: "Добавление помокода...", message: "\n", preferredStyle: .alert)
             let loadingIndicator = UIActivityIndicatorView(style: .medium)

@@ -10,8 +10,6 @@ import UIKit
 class PromocodeTableViewCell: UITableViewCell {
 
     @IBOutlet weak var promocodeLabel: UILabel!
-    @IBOutlet weak var priceLabel: UILabel!
-    @IBOutlet weak var saleTypeLabel: UILabel!
     
     override func awakeFromNib() {
         super.awakeFromNib()

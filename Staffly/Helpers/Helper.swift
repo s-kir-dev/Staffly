@@ -221,6 +221,12 @@ struct Employee {
     var profileImageURL: String
 }
 
+struct Promocode {
+    let name: String
+    let price: Double
+    let value: String
+}
+
 var employee: Employee = Employee(id: "", name: "", surname: "", email: "", password: "", role: "", tablesCount: 0, tips: 0, productsCount: 0, cafeProfit: 0, profileImageURL: "") // Я
 
 // MARK : - FirebaseDatabase
