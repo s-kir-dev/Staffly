@@ -56,7 +56,7 @@ class AddNewSaleImageViewController: UIViewController {
                 
                 switch result {
                 case .success(let imageUrl):
-                    db.child("Places").child(self.cafeID).child("sales").child("\(saleImageID)").setValue([
+                    db.child("Places").child(self.cafeID).child("sales").child("images").child("\(saleImageID)").setValue([
                         "\(saleImageID)": imageUrl
                     ]) { error, _ in
                         DispatchQueue.main.async {

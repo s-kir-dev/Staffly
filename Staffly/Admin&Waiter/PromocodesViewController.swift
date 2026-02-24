@@ -84,9 +84,8 @@ extension PromocodesViewController: UITableViewDataSource {
         let promocode = promocodes[indexPath.row]
         
         cell.promocodeLabel.text = "Промокод на скидку \(promocode.price)\(promocode.value) - \"\(promocode.name)\""
+        cell.selectionStyle = .none
         
         return cell
     }
-    
-    
 }
