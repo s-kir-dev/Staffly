@@ -65,25 +65,25 @@ class AddNewProductViewController: UIViewController {
     
     @objc func addProductButtonTapped() {
         guard !cafeID.isEmpty else {
-            showAlert("Ошибка", "ID кафе не найден. Перезайдите в систему.")
+            showAlert("Ошибка", "ID кафе не найден. Перезайдите в систему.", UIAlertAction(title: "Ок", style: .default))
             return
         }
         
         // Валидация полей
         guard let numberText = productNumberTextField.text, let number = Int(numberText) else {
-            showAlert("Ошибка", "Введите номер блюда")
+            showAlert("Ошибка", "Введите номер блюда", UIAlertAction(title: "Ок", style: .default))
             return
         }
         
         guard let name = productNameTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !name.isEmpty else {
-            showAlert("Ошибка", "Введите название блюда")
+            showAlert("Ошибка", "Введите название блюда", UIAlertAction(title: "Ок", style: .default))
             return
         }
         
         let description = productDescriptionTextView.text?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
         
         guard let rawCategory = productCategoryTextField.text?.trimmingCharacters(in: .whitespacesAndNewlines), !rawCategory.isEmpty else {
-            showAlert("Ошибка", "Введите категорию блюда")
+            showAlert("Ошибка", "Введите категорию блюда", UIAlertAction(title: "Ок", style: .default))
             return
         }
         
@@ -92,30 +92,30 @@ class AddNewProductViewController: UIViewController {
         
         guard let priceText = productPriceTextField.text?.replacingOccurrences(of: ",", with: "."),
               let price = Double(priceText)?.roundValue() else {
-            showAlert("Ошибка", "Введите корректную стоимость")
+            showAlert("Ошибка", "Введите корректную стоимость", UIAlertAction(title: "Ок", style: .default))
             return
         }
         
         guard let weightText = weightTextField.text, let weight = Int(weightText) else {
-            showAlert("Ошибка", "Введите вес блюда")
+            showAlert("Ошибка", "Введите вес блюда", UIAlertAction(title: "Ок", style: .default))
             return
         }
         
         guard let ccalText = ccalTextField.text, let ccal = Int(ccalText) else {
-            showAlert("Ошибка", "Введите калории")
+            showAlert("Ошибка", "Введите калории", UIAlertAction(title: "Ок", style: .default))
             return
         }
         
         let image = productImageView.image ?? UIImage(named: "блюдо")
         guard let imageData = image?.jpegData(compressionQuality: 0.7) else {
-            showAlert("Ошибка", "Проблема с форматом изображения")
+            showAlert("Ошибка", "Проблема с форматом изображения", UIAlertAction(title: "Ок", style: .default))
             return
         }
         
         // Проверка существования номера
         checkNumberExisting(number, cafeID) { isAvailable in
             if !isAvailable {
-                self.showAlert("Ошибка", "Номер \(number) уже занят другим блюдом")
+                self.showAlert("Ошибка", "Номер \(number) уже занят другим блюдом", UIAlertAction(title: "Ок", style: .default))
                 return
             }
             
@@ -178,10 +178,12 @@ class AddNewProductViewController: UIViewController {
                     DispatchQueue.main.async {
                         alert.dismiss(animated: true) {
                             if let error = error {
-                                self.showAlert("Ошибка БД", error.localizedDescription)
+                                self.showAlert("Ошибка БД", error.localizedDescription, UIAlertAction(title: "Ок", style: .default))
                             } else {
                                 self.clearFields()
-                                self.showAlert("Успех", "Блюдо добавлено!")
+                                self.showAlert("Успех", "Блюдо добавлено!", UIAlertAction(title: "Ок", style: .default, handler: { _ in
+                                    self.navigationController?.popViewController(animated: true)
+                                }))
                             }
                         }
                     }
@@ -190,7 +192,7 @@ class AddNewProductViewController: UIViewController {
             case .failure(let error):
                 DispatchQueue.main.async {
                     alert.dismiss(animated: true)
-                    self.showAlert("Ошибка загрузки", error.localizedDescription)
+                    self.showAlert("Ошибка загрузки", error.localizedDescription, UIAlertAction(title: "Ок", style: .default))
                 }
             }
         }
@@ -207,9 +209,9 @@ class AddNewProductViewController: UIViewController {
         productImageView.image = UIImage(named: "блюдо")
     }
     
-    func showAlert(_ title: String, _ message: String) {
+    func showAlert(_ title: String, _ message: String, _ action: UIAlertAction) {
         let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        alert.addAction(UIAlertAction(title: "Ок", style: .default))
+        alert.addAction(action)
         present(alert, animated: true)
     }
     

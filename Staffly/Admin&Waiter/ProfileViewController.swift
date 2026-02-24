@@ -15,8 +15,6 @@ class ProfileViewController: UIViewController {
     @IBOutlet weak var selfIDLabel: UILabel!
     @IBOutlet weak var cafeIDLabel: UILabel!
     @IBOutlet weak var summaTipsLabel: UILabel!
-    @IBOutlet weak var inviteCodesButton: UIButton!
-    @IBOutlet weak var workersButton: UIButton!
     @IBOutlet weak var signOutButton: UIButton!
     @IBOutlet weak var deleteAccountButton: UIButton!
     
@@ -112,21 +110,15 @@ class ProfileViewController: UIViewController {
         switch role {
         case "Admin":
             roleString = "Админ"
-            inviteCodesButton.isHidden = false
-            workersButton.isHidden = false
             cafeIDLabel.isHidden = false
             summaTipsLabel.isHidden = false
             summaTipsLabel.text = "Сумма чаевых: \(employee.tips.roundValue())р."
         case "Waiter":
             roleString = "Официант"
-            workersButton.isHidden = true
-            inviteCodesButton.isHidden = true
             cafeIDLabel.isHidden = true
             summaTipsLabel.text = "Сумма чаевых: \(employee.tips.roundValue())р."
         case "Cook":
             roleString = "Повар"
-            workersButton.isHidden = true
-            inviteCodesButton.isHidden = true
             cafeIDLabel.isHidden = true
             summaTipsLabel.text = "Блюд приготовлено: \(employee.productsCount)"
             self.navigationItem.leftBarButtonItem = nil
