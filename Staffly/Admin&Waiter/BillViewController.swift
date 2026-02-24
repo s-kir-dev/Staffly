@@ -56,7 +56,7 @@ class BillViewController: UIViewController {
             
     var tableIndex: Int = 0
     
-    var tableData: Table = Table(number: 0, personCount: 0, maximumPersonCount: 0, currentPersonCount: 0, client1Bill: 0, client2Bill: 0, client3Bill: 0, client4Bill: 0, client5Bill: 0, client6Bill: 0, bill: 0, waiterID: "")
+    var table: Table = Table(number: 0, personCount: 0, maximumPersonCount: 0, currentPersonCount: 0, client1Bill: 0, client2Bill: 0, client3Bill: 0, client4Bill: 0, client5Bill: 0, client6Bill: 0, bill: 0, waiterID: "")
     
     var finalTableBill = 0.0
     
@@ -68,33 +68,44 @@ class BillViewController: UIViewController {
         view.addSubview(loadingIndicator)
         
         loadingIndicator.startAnimating()
+        
         guard let cafeID = UserDefaults.standard.string(forKey: "cafeID"),
               let selfID = UserDefaults.standard.string(forKey: "selfID") else {
             loadingIndicator.stopAnimating()
             return
         }
         
-        let tablesRef = db.child("Places").child(cafeID).child("employees").child(selfID).child("tables")
+        let tablesRef = Database.database().reference().child("Places").child(cafeID).child("employees").child(selfID).child("tables")
         
-        tablesRef.observeSingleEvent(of: .value, with: { snapshot in
+        tablesRef.observeSingleEvent(of: .value, with: { [weak self] snapshot in
+            guard let self = self else { return }
+            
             let newTableNumbers = snapshot.value as? [Int] ?? []
             tableNumbers = newTableNumbers
             
             loadTables(cafeID, selfID, newTableNumbers) { fetchedTables in
                 let sortedTables = fetchedTables.sorted { $0.number < $1.number }
                 tables = sortedTables
-                
                 tableNumbers = sortedTables.map { $0.number }
                 
                 DispatchQueue.main.async {
-                    self.tableData = tables[self.tableIndex]
-                    self.setupUI()
-                    self.loadingIndicator.stopAnimating()
-                    debugPrint("✅ Данные обновлены: столы \(tableNumbers)")
+                    if self.tableIndex < tables.count {
+                        self.table = tables[self.tableIndex]
+                        self.setupUI()
+                        
+                        self.recalculateFinalTableBill()
+                        
+                        self.loadingIndicator.stopAnimating()
+                        debugPrint("✅ Данные обновлены и чаевые пересчитаны")
+                    } else {
+                        self.loadingIndicator.stopAnimating()
+                        print("Ошибка: tableIndex вне диапазона")
+                    }
                 }
             }
         })
     }
+
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -104,7 +115,7 @@ class BillViewController: UIViewController {
     }
     
     func setupUI() {
-        finalTableBill = tableData.bill
+        finalTableBill = table.bill
         
         let clientLabels: [UILabel] = [UILabel(), client2Label, client3Label, client4Label, client5Label, client6Label]
         let clientBillLabels: [UILabel] = [client1BillLabel, client2BillLabel, client3BillLabel, client4BillLabel, client5BillLabel, client6BillLabel]
@@ -112,7 +123,7 @@ class BillViewController: UIViewController {
         let clientFinalBillLabels: [UILabel] = [client1FinalBillLabel, client2FinalBillLabel, client3FinalBillLabel, client4FinalBillLabel, client5FinalBillLabel, client6FinalBillLabel]
         let sliders: [UISlider] = [UISlider(), tipsSlider2, tipsSlider3, tipsSlider4, tipsSlider5, tipsSlider6]
         
-        for index in 0..<tableData.maximumPersonCount { // обновление UI после изменения количества клиентов
+        for index in 0..<table.maximumPersonCount { // обновление UI после изменения количества клиентов
             clientLabels[index].isHidden = false
             clientBillLabels[index].isHidden = false
             clientTipsLabels[index].isHidden = false
@@ -120,7 +131,7 @@ class BillViewController: UIViewController {
             sliders[index].isHidden = false
         }
         
-        for index in tableData.maximumPersonCount..<6 {
+        for index in table.maximumPersonCount..<6 {
             clientLabels[index].isHidden = true
             clientBillLabels[index].isHidden = true
             clientTipsLabels[index].isHidden = true
@@ -128,21 +139,21 @@ class BillViewController: UIViewController {
             sliders[index].isHidden = true
         }
         
-        tableNumberLabel.text = "Стол №\(tableData.number)"
+        tableNumberLabel.text = "Стол №\(table.number)"
         
-        client1BillLabel.text = "\(tableData.client1Bill.roundValue())р."
-        client2BillLabel.text = "\(tableData.client2Bill.roundValue())р."
-        client3BillLabel.text = "\(tableData.client3Bill.roundValue())р."
-        client4BillLabel.text = "\(tableData.client4Bill.roundValue())р."
-        client5BillLabel.text = "\(tableData.client5Bill.roundValue())р."
-        client6BillLabel.text = "\(tableData.client6Bill.roundValue())р."
+        client1BillLabel.text = "\(table.client1Bill.roundValue())р."
+        client2BillLabel.text = "\(table.client2Bill.roundValue())р."
+        client3BillLabel.text = "\(table.client3Bill.roundValue())р."
+        client4BillLabel.text = "\(table.client4Bill.roundValue())р."
+        client5BillLabel.text = "\(table.client5Bill.roundValue())р."
+        client6BillLabel.text = "\(table.client6Bill.roundValue())р."
         
         for index in 0..<6 {
             clientFinalBillLabels[index].text = clientBillLabels[index].text
         }
         
-        tableBillLabel.text = "\(tableData.bill.roundValue())р."
-        tableFinalBillLabel.text = "\(tableData.bill.roundValue())р."
+        tableBillLabel.text = "\(table.bill.roundValue())р."
+        tableFinalBillLabel.text = "\(table.bill.roundValue())р."
     }
     
     @IBAction func tipsClient1Changed(_ sender: UISlider) {
@@ -206,22 +217,21 @@ class BillViewController: UIViewController {
     }
     
     func recalculateFinalTableBill() {
-        let client1Tip = table.client1Bill * Double(Int(tipsClient1Label.text!.dropLast(2)) ?? 0) / 100.0
-        let client2Tip = table.client2Bill * Double(Int(tipsClient2Label.text!.dropLast(2)) ?? 0) / 100.0
-        let client3Tip = table.client3Bill * Double(Int(tipsClient3Label.text!.dropLast(2)) ?? 0) / 100.0
-        let client4Tip = table.client4Bill * Double(Int(tipsClient4Label.text!.dropLast(2)) ?? 0) / 100.0
-        let client5Tip = table.client5Bill * Double(Int(tipsClient5Label.text!.dropLast(2)) ?? 0) / 100.0
-        let client6Tip = table.client6Bill * Double(Int(tipsClient6Label.text!.dropLast(2)) ?? 0) / 100.0
+        let t1: Double = table.client1Bill + (table.client1Bill * (Double(Int(tipsClient1Label.text?.dropLast(2) ?? "0") ?? 0) / 100.0))
+        let t2: Double = table.client2Bill + (table.client2Bill * (Double(Int(tipsClient2Label.text?.dropLast(2) ?? "0") ?? 0) / 100.0))
+        let t3: Double = table.client3Bill + (table.client3Bill * (Double(Int(tipsClient3Label.text?.dropLast(2) ?? "0") ?? 0) / 100.0))
+        let t4: Double = table.client4Bill + (table.client4Bill * (Double(Int(tipsClient4Label.text?.dropLast(2) ?? "0") ?? 0) / 100.0))
+        let t5: Double = table.client5Bill + (table.client5Bill * (Double(Int(tipsClient5Label.text?.dropLast(2) ?? "0") ?? 0) / 100.0))
+        let t6: Double = table.client6Bill + (table.client6Bill * (Double(Int(tipsClient6Label.text?.dropLast(2) ?? "0") ?? 0) / 100.0))
         
-        finalTableBill = table.client1Bill + client1Tip +
-                         table.client2Bill + client2Tip +
-                         table.client3Bill + client3Tip +
-                         table.client4Bill + client4Tip +
-                         table.client5Bill + client5Tip +
-                         table.client6Bill + client6Tip
+        let sum1 = t1 + t2 + t3
+        let sum2 = t4 + t5 + t6
+        
+        self.finalTableBill = sum1 + sum2
         
         tableFinalBillLabel.text = "\(finalTableBill.roundValue())р."
     }
+
     
     @objc func detailButtonTapped() {
         performSegue(withIdentifier: "orderedProductsVC", sender: self)

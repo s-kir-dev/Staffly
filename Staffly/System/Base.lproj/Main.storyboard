@@ -3249,7 +3249,7 @@
                                                         <constraint firstAttribute="width" secondItem="wU9-AO-CP6" secondAttribute="height" id="nGE-Fr-Yuz"/>
                                                     </constraints>
                                                 </imageView>
-                                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Вас зовут к столу № 125" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="11" translatesAutoresizingMaskIntoConstraints="NO" id="wG8-Ue-QGt">
+                                                <label opaque="NO" userInteractionEnabled="NO" contentMode="left" horizontalHuggingPriority="251" verticalHuggingPriority="251" text="Вас зовут к столу № 125" textAlignment="natural" lineBreakMode="tailTruncation" baselineAdjustment="alignBaselines" minimumFontSize="3" translatesAutoresizingMaskIntoConstraints="NO" id="wG8-Ue-QGt">
                                                     <rect key="frame" x="93" y="15" width="264" height="51"/>
                                                     <fontDescription key="fontDescription" type="system" weight="black" pointSize="21"/>
                                                     <nil key="textColor"/>
