@@ -175,8 +175,8 @@ extension ReadyOrdersViewController: UITableViewDelegate, UITableViewDataSource 
                 .child("clients")
                 .child("client\(readyOrder.clientNumber)")
                 .child("orders")
-                .child(readyOrder.id)
-                .updateChildValues(["status": "Доставлено Вам"])
+                .child("\(readyOrder.tableNumber)-\(readyOrder.clientNumber)-\(readyOrder.id)")
+                .updateChildValues(["status": "Доставлено, приятного аппетита"])
             
             let orderRef = db.child("Places").child(self.cafeID)
                                  .child("readyOrders")

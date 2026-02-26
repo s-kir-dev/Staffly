@@ -233,44 +233,59 @@ extension TablesViewController: UITableViewDelegate, UITableViewDataSource {
             }
             
             let deleteConfirm = UIAlertAction(title: "Удалить", style: .destructive) { _ in
-                let selfID = UserDefaults.standard.string(forKey: "selfID") ?? ""
                 let baseRef = db.child("Places").child(cafeID)
                 let group = DispatchGroup()
                 
                 group.enter()
-                removeTable(cafeID, selfID, tableToDelete) {
+                let clientsPath = baseRef.child("tables").child("\(tableNumber)").child("clients")
+                
+                clientsPath.observeSingleEvent(of: .value, with: { snapshot in
+                    for child in snapshot.children {
+                        if let snap = child as? DataSnapshot {
+                            let clientUID = snap.key
+                            print("Нашел клиента: \(clientUID), очищаю сессию...")
+                            
+                            group.enter()
+                            clearUserSession(uid: clientUID) {
+                                group.leave()
+                            }
+                        }
+                    }
+                    group.leave()
+                }) { error in
+                    print("Ошибка чтения клиентов: \(error.localizedDescription)")
                     group.leave()
                 }
                 
-                let pathsToRemove = [
+                let otherPaths = [
                     baseRef.child("orders").child("\(tableNumber)"),
-                    baseRef.child("readyOrders").child("\(tableNumber)"),
-                    baseRef.child("tables").child("\(tableNumber)")
+                    baseRef.child("readyOrders").child("\(tableNumber)")
                 ]
                 
-                for ref in pathsToRemove {
+                for ref in otherPaths {
                     group.enter()
-                    ref.removeValue { error, _ in
-                        if let error = error {
-                            print("Ошибка удаления пути \(ref.key ?? ""): \(error.localizedDescription)")
-                        }
-                        group.leave()
-                    }
+                    ref.removeValue { _, _ in group.leave() }
                 }
-                
+
                 group.notify(queue: .main) {
-                    if indexPath.row < tables.count {
-                        tables.remove(at: indexPath.row)
-                        
-                        tableView.performBatchUpdates({
-                            tableView.deleteRows(at: [indexPath], with: .fade)
-                        }, completion: { _ in
-                            self.emptyImageView.isHidden = !tables.isEmpty
-                            completionHandler(true)
-                        })
+                    baseRef.child("tables").child("\(tableNumber)").removeValue { error, _ in
+                        if error == nil {
+                            print("Стол успешно удален полностью")
+                            
+                            if indexPath.row < tables.count {
+                                tables.remove(at: indexPath.row)
+                                tableView.performBatchUpdates({
+                                    tableView.deleteRows(at: [indexPath], with: .fade)
+                                }, completion: { _ in
+                                    self.emptyImageView.isHidden = !tables.isEmpty
+                                    completionHandler(true)
+                                })
+                            }
+                        }
                     }
                 }
             }
+
             
             alert.addAction(cancelAction)
             alert.addAction(deleteConfirm)

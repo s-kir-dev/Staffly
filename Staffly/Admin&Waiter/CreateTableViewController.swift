@@ -42,8 +42,8 @@ class CreateTableViewController: UIViewController {
             return
         }
         
-        guard personCount <= 6 else {
-            showAlert("Ошибка", "За столом не может быть больше 6 человек!", UIAlertAction(title: "Ок", style: .default))
+        guard personCount <= 6, personCount >= 0 else {
+            showAlert("Ошибка", "За столом не может быть меньше 1 человека или больше 6 человек!", UIAlertAction(title: "Ок", style: .default))
             return
         }
         

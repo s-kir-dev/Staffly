@@ -727,6 +727,21 @@ func orderProductsClient(_ cafeID: String, _ tableNumber: Int, _ clientNumber: I
     }
 }
 
+func clearUserSession(uid: String, completion: @escaping() -> Void) {
+    let updates: [String: Any?] = [
+        "currentCafe": nil,
+        "currentTable": nil,
+        "personalNumber": nil
+    ]
+    
+    db.child("Users").child(uid).updateChildValues(updates as [AnyHashable : Any]) { error, _ in
+        if let error = error {
+            print("Ошибка обновления юзера: \(error.localizedDescription)")
+        }
+        completion()
+    }
+}
+
 func saveMyOrders(_ orders: [ReadyOrder]) { // сохранение взятых поваром блюд
     if let encoded = try? JSONEncoder().encode(orders) {
         UserDefaults.standard.set(encoded, forKey: "myOrders")

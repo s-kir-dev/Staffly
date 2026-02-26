@@ -243,14 +243,7 @@ class BillViewController: UIViewController {
         
         let baseRef = db.child("Places").child(cafeID)
         let tableNumber = table.number
-        
         let group = DispatchGroup()
-        
-        let pathsToRemove = [
-            baseRef.child("orders").child("\(tableNumber)"),
-            baseRef.child("readyOrders").child("\(tableNumber)"),
-            baseRef.child("tables").child("\(tableNumber)")
-        ]
         
         let alert = UIAlertController(title: nil, message: "Очистка данных о столе...", preferredStyle: .alert)
         let loadingIndicator = UIActivityIndicatorView(style: .medium)
@@ -263,43 +256,61 @@ class BillViewController: UIViewController {
         loadingIndicator.startAnimating()
         present(alert, animated: true)
         
-        for ref in pathsToRemove {
-            group.enter()
-            ref.removeValue { error, _ in
-                if let error = error {
-                    print("Ошибка при удалении \(ref): \(error.localizedDescription)")
+        group.enter()
+        let clientsRef = baseRef.child("tables").child("\(tableNumber)").child("clients")
+        clientsRef.observeSingleEvent(of: .value, with: { snapshot in
+            for child in snapshot.children {
+                if let snap = child as? DataSnapshot {
+                    group.enter()
+                    clearUserSession(uid: snap.key) {
+                        print("Удалил клиента \(snap.key)")
+                        group.leave()
+                    }
                 }
-                group.leave()
             }
+            group.leave()
+        }) { error in
+            print(error.localizedDescription)
+            group.leave()
+        }
+        
+        let extraPaths = [
+            baseRef.child("orders").child("\(tableNumber)"),
+            baseRef.child("readyOrders").child("\(tableNumber)")
+        ]
+        
+        for ref in extraPaths {
+            group.enter()
+            ref.removeValue { _, _ in group.leave() }
         }
         
         group.notify(queue: .main) {
-            let selfID = UserDefaults.standard.string(forKey: "selfID")!
-            let cafeID = UserDefaults.standard.string(forKey: "cafeID")!
-            
-            let tips = self.finalTableBill - self.table.bill
-            employee.tips += tips.roundValue()
-            employee.tablesCount += 1
-            employee.cafeProfit += self.table.bill
+            baseRef.child("tables").child("\(tableNumber)").removeValue { _, _ in
+                
+                let selfID = UserDefaults.standard.string(forKey: "selfID")!
+                let tips = (self.finalTableBill - self.table.bill).roundValue()
+                
+                downloadUserData(cafeID, selfID) { currentEmployee in
+                    var updatedEmployee = currentEmployee
+                    updatedEmployee.tips += tips
+                    updatedEmployee.tablesCount += 1
+                    updatedEmployee.cafeProfit += self.table.bill
 
-            downloadUserData(cafeID, selfID) { currentEmployee in
-                var updatedEmployee = currentEmployee
-                updatedEmployee.tips += tips.roundValue()
-                updatedEmployee.tablesCount += 1
-                updatedEmployee.cafeProfit += self.table.bill
-
-                uploadUserData(cafeID, selfID, updatedEmployee) { _ in
-                    removeTable(cafeID, selfID, tables[tableIndex], completion: {
-                        tables.remove(at: tableIndex)
-                    })
-                    
-                    alert.dismiss(animated: true) {
-                        self.navigationController?.popViewController(animated: true)
+                    uploadUserData(cafeID, selfID, updatedEmployee) { _ in
+                        removeTable(cafeID, selfID, tables[tableIndex], completion: {
+                            if tableIndex < tables.count {
+                                tables.remove(at: tableIndex)
+                            }
+                            alert.dismiss(animated: true) {
+                                self.navigationController?.popViewController(animated: true)
+                            }
+                        })
                     }
                 }
             }
         }
     }
+
     
     func countPercentage(_ total: Double, _ tip: Double) -> Double {
         guard total != 0 else { return 0 }

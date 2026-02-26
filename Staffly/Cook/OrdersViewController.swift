@@ -136,7 +136,7 @@ extension OrdersViewController: UITableViewDelegate, UITableViewDataSource {
                             .child("clients")
                             .child("client\(product.clientNumber)")
                             .child("orders")
-                            .child(product.id)
+                            .child("\(tableKey)-\(product.clientNumber)-\(product.id)")
                             .updateChildValues(["status": "Готовится"])
                         
                         // 2. Просто удаляем из БД.

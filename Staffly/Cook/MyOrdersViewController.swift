@@ -114,7 +114,7 @@ extension MyOrdersViewController: UITableViewDelegate, UITableViewDataSource {
                 .child("clients")
                 .child("client\(currentProduct.clientNumber)")
                 .child("orders")
-                .child(currentProduct.id)
+                .child("\(tableKey)-\(currentProduct.clientNumber)-\(currentProduct.id)")
                 .updateChildValues(["status": "Готово"])
             
             // 2. Сохраняем в ветку готовых заказов
