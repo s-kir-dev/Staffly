@@ -83,6 +83,10 @@ class TablesViewController: UIViewController {
             if let billVC = segue.destination as? BillViewController {
                 billVC.tableIndex = tableIndex
             }
+        } else if segue.identifier == "scannerVC" {
+            if let scannerVC = segue.destination as? QrScannerViewController {
+                scannerVC.tableNumber = tables[tableIndex].number
+            }
         }
     }
 }
@@ -268,10 +272,12 @@ extension TablesViewController: UITableViewDelegate, UITableViewDataSource {
                 }
 
                 group.notify(queue: .main) {
-                    baseRef.child("tables").child("\(tableNumber)").removeValue { error, _ in
-                        if error == nil {
-                            print("Стол успешно удален полностью")
-                            
+                    baseRef.child("tables").child("\(tableNumber)").removeValue { _, _ in
+                        guard let selfID = UserDefaults.standard.string(forKey: "selfID") else {
+                            print("Нет selfID при удалении стола в TablesVC")
+                            return
+                        }
+                        removeTable(cafeID, selfID, tables[self.tableIndex], completion: {
                             if indexPath.row < tables.count {
                                 tables.remove(at: indexPath.row)
                                 tableView.performBatchUpdates({
@@ -281,11 +287,10 @@ extension TablesViewController: UITableViewDelegate, UITableViewDataSource {
                                     completionHandler(true)
                                 })
                             }
-                        }
+                        })
                     }
                 }
             }
-
             
             alert.addAction(cancelAction)
             alert.addAction(deleteConfirm)
@@ -352,6 +357,11 @@ extension TablesViewController: UITableViewDelegate, UITableViewDataSource {
             self.tableIndex = indexPath.row
             self.performSegue(withIdentifier: "billVC", sender: indexPath)
         }
+        
+        let passTable = UIContextualAction(style: .normal, title: "Передать") { _, _, _ in
+            self.tableIndex = indexPath.row
+            self.performSegue(withIdentifier: "scannerVC", sender: indexPath)
+        }
 
         deleteAction.image = UIImage(systemName: "trash.fill")
         deleteAction.backgroundColor = .red
@@ -361,7 +371,9 @@ extension TablesViewController: UITableViewDelegate, UITableViewDataSource {
         showOrderedProductsAction.backgroundColor = .systemPurple
         billAction.backgroundColor = .systemMint.withAlphaComponent(0.95)
         billAction.image = UIImage(systemName: "wallet.pass")
-
-        return UISwipeActionsConfiguration(actions: [billAction, showOrderedProductsAction, updatePeopleCountAction, deleteAction])
+        passTable.backgroundColor = .systemOrange.withAlphaComponent(0.95)
+        passTable.image = UIImage(systemName: "paperplane.fill")
+        
+        return UISwipeActionsConfiguration(actions: [billAction, showOrderedProductsAction, updatePeopleCountAction, passTable, deleteAction])
     }
 }

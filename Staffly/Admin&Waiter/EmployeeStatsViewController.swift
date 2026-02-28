@@ -16,6 +16,7 @@ class EmployeeStatsViewController: UIViewController {
     @IBOutlet weak var tablesCountLabel: UILabel!
     @IBOutlet weak var tablesCountValueLabel: UILabel!
     @IBOutlet weak var cafeProfitValueLabel: UILabel!
+    @IBOutlet weak var qrImageView: UIImageView!
     @IBOutlet weak var emailTextField: UITextField!
     @IBOutlet weak var passwordTextField: UITextField!
     
@@ -55,6 +56,8 @@ class EmployeeStatsViewController: UIViewController {
         
         emailTextField.text = selectedEmployee.email
         passwordTextField.text = selectedEmployee.password
+        
+        qrImageView.image = generateEmployeeQR(selectedEmployee.id)
     }
 
 }

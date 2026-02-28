@@ -206,6 +206,26 @@ func generateTableQR(_ cafeID: String, _ tableNumber: Int, _ clientCount: Int, _
     return UIImage(ciImage: scaledImage)
 }
 
+func generateEmployeeQR(_ employeeID: String) -> UIImage? {
+    let rawString = "staffly://employee?employeeID=\(employeeID)"
+    
+    guard let encodedString = rawString.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+          let data = encodedString.data(using: .utf8) else { return nil }
+    
+    let filter = CIFilter.qrCodeGenerator()
+    filter.setValue(data, forKey: "inputMessage")
+    
+    filter.setValue("Q", forKey: "inputCorrectionLevel")
+    
+    guard let outputImage = filter.outputImage else { return nil }
+    
+    let transform = CGAffineTransform(scaleX: 100, y: 100)
+    let scaledImage = outputImage.transformed(by: transform)
+    
+    return UIImage(ciImage: scaledImage)
+}
+
+
 
 struct Employee {
     var id: String
@@ -549,8 +569,9 @@ func updateTableData(_ cafeID: String, _ table: Table, completion: @escaping ()-
         "client4Bill": table.client4Bill,
         "client5Bill": table.client5Bill,
         "client6Bill": table.client6Bill,
-        "bill": table.bill
-    ]) { _,_ in 
+        "bill": table.bill,
+        "waiterID": table.waiterID
+    ]) { _,_ in
         completion()
     }
 }
