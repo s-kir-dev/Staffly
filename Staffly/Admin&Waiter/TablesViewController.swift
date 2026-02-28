@@ -19,6 +19,10 @@ class TablesViewController: UIViewController {
     var currentClient: Int = 0
     var tableIndex: Int = 0
     
+    // MARK: - Properties
+    private var tablesHandle: DatabaseHandle? // для обсервера столов
+    private var billsHandles: [String: DatabaseHandle] = [:] // Словарь для хранения обсерверов каждого стола
+
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -29,41 +33,89 @@ class TablesViewController: UIViewController {
         tableView.refreshControl = refreshControl
 
         plusButton.addTarget(self, action: #selector(plusButtonTapped), for: .touchUpInside)
+        
+        setupObservers()
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        
         refreshData()
     }
-    
-    @objc private func refreshData() {
+
+    deinit {
+        removeOldObservers()
+    }
+
+    private func setupObservers() {
         guard let cafeID = UserDefaults.standard.string(forKey: "cafeID"),
-              let selfID = UserDefaults.standard.string(forKey: "selfID") else {
-            self.refreshControl.endRefreshing()
-            return
-        }
+              let selfID = UserDefaults.standard.string(forKey: "selfID") else { return }
         
         let tablesRef = db.child("Places").child(cafeID).child("employees").child(selfID).child("tables")
         
-        tablesRef.observeSingleEvent(of: .value) { snapshot in
+        // 1. Основной обсервер: следит за изменением списка номеров столов
+        tablesHandle = tablesRef.observe(.value, with: { [weak self] snapshot in
+            guard let self = self else { return }
+            
             let newTableNumbers = snapshot.value as? [Int] ?? []
             tableNumbers = newTableNumbers
             
-            loadTables(cafeID, selfID, newTableNumbers) { fetchedTables in
-                let sortedTables = fetchedTables.sorted { $0.number < $1.number }
-                tables = sortedTables
+            self.clearBillsHandles(cafeID: cafeID)
+            
+            for number in newTableNumbers {
+                let billRef = db.child("Places").child(cafeID).child("tables").child("\(number)").child("bill")
                 
-                tableNumbers = sortedTables.map { $0.number }
-                
-                DispatchQueue.main.async {
-                    self.emptyImageView.isHidden = !tables.isEmpty
-                    self.tableView.reloadData()
-                    self.refreshControl.endRefreshing()
-                    debugPrint("✅ Данные обновлены: столы \(tableNumbers)")
+                let handle = billRef.observe(.value) { _ in
+                    // изменился bill у моих столов — перезагружаем всё
+                    self.fetchData(cafeID: cafeID, selfID: selfID, numbers: tableNumbers)
                 }
+                self.billsHandles["\(number)"] = handle
+            }
+            
+            self.fetchData(cafeID: cafeID, selfID: selfID, numbers: newTableNumbers)
+        })
+    }
+
+    private func fetchData(cafeID: String, selfID: String, numbers: [Int]) {
+        loadTables(cafeID, selfID, numbers) { fetchedTables in
+            let sortedTables = fetchedTables.sorted { $0.number < $1.number }
+            tables = sortedTables
+            tableNumbers = sortedTables.map { $0.number }
+            
+            DispatchQueue.main.async {
+                self.emptyImageView.isHidden = !tables.isEmpty
+                self.tableView.reloadData()
+                debugPrint("🔄 Данные обновлены автоматически (Bill/List change)")
             }
         }
     }
+
+    private func clearBillsHandles(cafeID: String) {
+        for (number, handle) in billsHandles {
+            db.child("Places").child(cafeID).child("tables").child(number).child("bill").removeObserver(withHandle: handle)
+        }
+        billsHandles.removeAll()
+    }
+
+    private func removeOldObservers() {
+        guard let cafeID = UserDefaults.standard.string(forKey: "cafeID"),
+              let selfID = UserDefaults.standard.string(forKey: "selfID") else { return }
+        
+        if let handle = tablesHandle {
+            db.child("Places").child(cafeID).child("employees").child(selfID).child("tables").removeObserver(withHandle: handle)
+        }
+        clearBillsHandles(cafeID: cafeID)
+    }
+    
+    @objc private func refreshData() {
+        removeOldObservers()
+        setupObservers()
+        
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            self.refreshControl.endRefreshing()
+        }
+    }
+
 
     @objc func plusButtonTapped() {
         performSegue(withIdentifier: "newTableVC", sender: nil)
@@ -277,7 +329,7 @@ extension TablesViewController: UITableViewDelegate, UITableViewDataSource {
                             print("Нет selfID при удалении стола в TablesVC")
                             return
                         }
-                        removeTable(cafeID, selfID, tables[self.tableIndex], completion: {
+                        removeTable(cafeID, selfID, tableNumber, completion: {
                             if indexPath.row < tables.count {
                                 tables.remove(at: indexPath.row)
                                 tableView.performBatchUpdates({

@@ -534,13 +534,13 @@ func deleteUserFromUserDefaults() {
 }
 
 
-func removeTable(_ cafeID: String, _ selfID: String, _ table: Table, completion: @escaping () -> ()) {
+func removeTable(_ cafeID: String, _ selfID: String, _ tableNumber: Int, completion: @escaping () -> ()) {
     let tablesRef = db.child("Places").child(cafeID).child("employees").child(selfID).child("tables")
     
     tablesRef.runTransactionBlock({ (currentData: MutableData) -> TransactionResult in
         var items = currentData.value as? [Int] ?? []
         
-        if let index = items.firstIndex(of: table.number) {
+        if let index = items.firstIndex(of: tableNumber) {
             items.remove(at: index)
             currentData.value = items
             return TransactionResult.success(withValue: currentData)

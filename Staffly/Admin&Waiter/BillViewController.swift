@@ -297,7 +297,7 @@ class BillViewController: UIViewController {
                     updatedEmployee.cafeProfit += self.table.bill
 
                     uploadUserData(cafeID, selfID, updatedEmployee) { _ in
-                        removeTable(cafeID, selfID, tables[tableIndex], completion: {
+                        removeTable(cafeID, selfID, tableNumber, completion: {
                             if tableIndex < tables.count {
                                 tables.remove(at: tableIndex)
                             }
