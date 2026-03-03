@@ -97,17 +97,17 @@ class MenuViewController: UIViewController {
     // MARK: - Save on leave
     override func viewWillDisappear(_ animated: Bool) {
         super.viewWillDisappear(animated)
-        guard self.isMovingFromParent else { return }
-
-        // Если ничего не выбрали — просто уходим
-        if orderedProducts.isEmpty { return }
+        guard self.isMovingFromParent, !orderedProducts.isEmpty else { return }
 
         activityIndicatorView.startAnimating()
         let group = DispatchGroup()
         
-        // Группируем продукты для каждого клиента (участника заказа)
-        var distribution: [Int: [SelectedProduct]] = [:]
+        group.enter()
+        orderProducts(orderedProducts, cafeID, tableNumbers[tableIndex], currentClient) {
+            group.leave()
+        }
 
+        var distribution: [Int: [SelectedProduct]] = [:]
         for product in orderedProducts {
             let participants = sharedDishes[product.id] ?? [currentClient]
             let shareCount = Double(participants.count)
@@ -130,21 +130,23 @@ class MenuViewController: UIViewController {
             }
         }
 
-        // Вызываем твою функцию сохранения для каждого клиента
         for (clientIndex, productsToSave) in distribution {
             group.enter()
             let clientSum = productsToSave.reduce(0) { $0 + ($1.product.productPrice * Double($1.quantity)) }
-            
-            // Используем твой orderProductsClient из Helper.swift
             orderProductsClient(cafeID, tableNumbers[tableIndex], clientIndex, clientSum.roundUp(), productsToSave) {
                 group.leave()
             }
         }
 
         group.notify(queue: .main) {
+            self.orderedProducts.removeAll()
+            self.sharedDishes.removeAll()
             self.activityIndicatorView.stopAnimating()
         }
     }
+
+
+
 
     @objc func refreshMenu() {
         updateMenu(isRefreshing: true)

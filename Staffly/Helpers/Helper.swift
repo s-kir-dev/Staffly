@@ -140,13 +140,6 @@ struct Table: Codable, Equatable {
     var maximumPersonCount: Int
     var currentPersonCount: Int
     
-//    var selectedProducts1: [SelectedProduct] = []
-//    var selectedProducts2: [SelectedProduct] = []
-//    var selectedProducts3: [SelectedProduct] = []
-//    var selectedProducts4: [SelectedProduct] = []
-//    var selectedProducts5: [SelectedProduct] = []
-//    var selectedProducts6: [SelectedProduct] = []
-    
     var client1Bill: Double
     var client2Bill: Double
     var client3Bill: Double
@@ -347,9 +340,19 @@ func checkTableNumberExisting(_ tableNumber: Int, _ cafeID: String, completion: 
     }
 }
 
-func orderProducts(_ products: [Product], _ cafeID: String, _ tableNumber: Int, _ clientNumber: Int) {
+func orderProducts(_ products: [Product], _ cafeID: String, _ tableNumber: Int, _ clientNumber: Int, completion: @escaping () -> Void) {
+    guard !products.isEmpty else {
+        completion()
+        return
+    }
+
+    let group = DispatchGroup()
+    let ordersRef = db.child("Places").child(cafeID).child("orders").child("\(tableNumber)")
+
     for product in products {
-        db.child("Places").child(cafeID).child("orders").child("\(tableNumber)").child(UUID().uuidString).setValue([
+        group.enter()
+        
+        let orderData: [String: Any] = [
             "a tableNumber": tableNumber,
             "b clientNumber": clientNumber,
             "id": product.id,
@@ -360,9 +363,21 @@ func orderProducts(_ products: [Product], _ cafeID: String, _ tableNumber: Int, 
             "productName": product.productName,
             "productPrice": product.productPrice,
             "additionWishes": product.additionWishes
-        ])
+        ]
+
+        ordersRef.child(UUID().uuidString).setValue(orderData) { error, _ in
+            if let error = error {
+                print("Ошибка при записи блюда: \(error.localizedDescription)")
+            }
+            group.leave()
+        }
+    }
+
+    group.notify(queue: .main) {
+        completion()
     }
 }
+
 
 func downloadUserData(_ cafeID: String, _ selfID: String, completion: @escaping (Employee) -> Void) {
     db.child("Places").child(cafeID).child("employees").child(selfID).observeSingleEvent(of: .value) { snapshot, _ in
@@ -653,48 +668,15 @@ func loadSelectedProducts(_ cafeID: String, _ clientNumber: Int, _ tableNumber: 
 func orderProductsClient(_ cafeID: String, _ tableNumber: Int, _ clientNumber: Int, _ summa: Double, _ products: [SelectedProduct], completion: @escaping () -> Void) {
     let group = DispatchGroup()
     
-    let cookRef = db.child("Places").child(cafeID).child("orders").child("\(tableNumber)")
     let clientRef = db.child("Places").child(cafeID).child("tables").child("\(tableNumber)").child("clients").child("client\(clientNumber)")
     let clientOrdersRef = clientRef.child("orders")
-    
-    for selectedProduct in products {
-        for _ in 1...selectedProduct.quantity {
-            group.enter()
-            //let orderItemID = (auth.currentUser?.uid ?? "") + UUID().uuidString
-            cookRef.child(UUID().uuidString).setValue([
-                "a tableNumber": tableNumber,
-                "b clientNumber": clientNumber,
-                "id": selectedProduct.product.id,
-                "menuNumber": selectedProduct.product.menuNumber,
-                "productCategory": selectedProduct.product.productCategory,
-                "productName": selectedProduct.product.productName,
-                "productDescription": selectedProduct.product.productDescription,
-                "productPrice": selectedProduct.product.productPrice,
-                "productImageURL": selectedProduct.product.productImageURL,
-                "rating": 0,
-                "myRating": 0,
-                "additionWishes": selectedProduct.product.additionWishes,
-                "placeName": "Ля салют",
-                "weight": selectedProduct.product.weight,
-                "ccal": selectedProduct.product.ccal,
-                
-                "sharedWith": selectedProduct.sharedWith,
-                "quantity": selectedProduct.quantity,
-                
-                "status": "Отправлен"
-            ]) { _, _ in
-                group.leave()
-            }
-        }
-    }
-    
+        
     for selectedProduct in products {
         group.enter()
         
-        // массив [1, 2] в строку "1-2"
         let sharedString = selectedProduct.sharedWith.isEmpty ? "\(clientNumber)" : selectedProduct.sharedWith.map { String($0) }.joined(separator: "-")
-        
-        let productRef = clientOrdersRef.child("\(tableNumber)-\(sharedString)-\(selectedProduct.product.id)")
+        let productKey = "\(tableNumber)-\(sharedString)-\(selectedProduct.product.id)"
+        let productRef = clientOrdersRef.child(productKey)
         
         productRef.observeSingleEvent(of: .value, with: { snapshot in
             if snapshot.exists(), let productData = snapshot.value as? [String: Any], let oldQty = productData["quantity"] as? Int {
@@ -732,9 +714,7 @@ func orderProductsClient(_ cafeID: String, _ tableNumber: Int, _ clientNumber: I
         group.leave()
     }
     
-    
     let tableRef = db.child("Places").child(cafeID).child("tables").child("\(tableNumber)")
-    
     group.enter()
     tableRef.updateChildValues([
         "bill": ServerValue.increment(NSNumber(value: summa)),
@@ -747,6 +727,7 @@ func orderProductsClient(_ cafeID: String, _ tableNumber: Int, _ clientNumber: I
         completion()
     }
 }
+
 
 func clearUserSession(uid: String, completion: @escaping() -> Void) {
     let updates: [String: Any?] = [
