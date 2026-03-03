@@ -83,11 +83,11 @@ class CreateTableViewController: UIViewController {
                     bill: 0,
                     waiterID: selfID
                 )
-                                
+
                 updateTableData(cafeID, newTable) {
-                    tableNumbers.append(tableNumber)
-                    tables.append(newTable)
+                    print("Данные стола успешно отправлены в Firebase")
                 }
+
                 
                 let alert = UIAlertController(
                     title: "Успешно!",

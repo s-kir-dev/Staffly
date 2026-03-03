@@ -327,22 +327,13 @@ extension TablesViewController: UITableViewDelegate, UITableViewDataSource {
                 
                 group.enter()
                 let clientsPath = baseRef.child("tables").child("\(tableNumber)").child("clients")
-                
-                clientsPath.observeSingleEvent(of: .value, with: { snapshot in
+                clientsPath.observeSingleEvent(of: .value) { snapshot in
                     for child in snapshot.children {
                         if let snap = child as? DataSnapshot {
-                            let clientUID = snap.key
-                            print("Нашел клиента: \(clientUID), очищаю сессию...")
-                            
                             group.enter()
-                            clearUserSession(uid: clientUID) {
-                                group.leave()
-                            }
+                            clearUserSession(uid: snap.key) { group.leave() }
                         }
                     }
-                    group.leave()
-                }) { error in
-                    print("Ошибка чтения клиентов: \(error.localizedDescription)")
                     group.leave()
                 }
                 
@@ -350,7 +341,6 @@ extension TablesViewController: UITableViewDelegate, UITableViewDataSource {
                     baseRef.child("orders").child("\(tableNumber)"),
                     baseRef.child("readyOrders").child("\(tableNumber)")
                 ]
-                
                 for ref in otherPaths {
                     group.enter()
                     ref.removeValue { _, _ in group.leave() }
@@ -358,21 +348,11 @@ extension TablesViewController: UITableViewDelegate, UITableViewDataSource {
 
                 group.notify(queue: .main) {
                     baseRef.child("tables").child("\(tableNumber)").removeValue { _, _ in
-                        guard let selfID = UserDefaults.standard.string(forKey: "selfID") else {
-                            print("Нет selfID при удалении стола в TablesVC")
-                            return
+                        guard let selfID = UserDefaults.standard.string(forKey: "selfID") else { return }
+                        
+                        removeTable(cafeID, selfID, tableNumber) {
+                            completionHandler(true)
                         }
-                        removeTable(cafeID, selfID, tableNumber, completion: {
-                            if indexPath.row < tables.count {
-                                tables.remove(at: indexPath.row)
-                                tableView.performBatchUpdates({
-                                    tableView.deleteRows(at: [indexPath], with: .fade)
-                                }, completion: { _ in
-                                    self.emptyImageView.isHidden = !tables.isEmpty
-                                    completionHandler(true)
-                                })
-                            }
-                        })
                     }
                 }
             }
