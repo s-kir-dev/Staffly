@@ -285,8 +285,9 @@ class BillViewController: UIViewController {
         }
         
         group.notify(queue: .main) {
-            baseRef.child("tables").child("\(tableNumber)").removeValue { _, _ in
-                
+            baseRef.child("tables").child("\(tableNumber)").removeValue { error, _ in
+                if let error = error { print("Ошибка удаления стола: \(error)"); return }
+
                 let selfID = UserDefaults.standard.string(forKey: "selfID")!
                 let tips = (self.finalTableBill - self.table.bill).roundValue()
                 
@@ -298,9 +299,6 @@ class BillViewController: UIViewController {
 
                     uploadUserData(cafeID, selfID, updatedEmployee) { _ in
                         removeTable(cafeID, selfID, tableNumber, completion: {
-                            if tableIndex < tables.count {
-                                tables.remove(at: tableIndex)
-                            }
                             alert.dismiss(animated: true) {
                                 self.navigationController?.popViewController(animated: true)
                             }

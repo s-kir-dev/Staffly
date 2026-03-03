@@ -51,30 +51,63 @@ class TablesViewController: UIViewController {
         guard let cafeID = UserDefaults.standard.string(forKey: "cafeID"),
               let selfID = UserDefaults.standard.string(forKey: "selfID") else { return }
         
-        let tablesRef = db.child("Places").child(cafeID).child("employees").child(selfID).child("tables")
+        let tablesListRef = db.child("Places").child(cafeID).child("employees").child(selfID).child("tables")
         
-        // 1. Основной обсервер: следит за изменением списка номеров столов
-        tablesHandle = tablesRef.observe(.value, with: { [weak self] snapshot in
+        tablesHandle = tablesListRef.observe(.value, with: { [weak self] snapshot in
             guard let self = self else { return }
+            let currentNumbersInDB = snapshot.value as? [Int] ?? []
             
-            let newTableNumbers = snapshot.value as? [Int] ?? []
-            tableNumbers = newTableNumbers
-            
+            tables.removeAll { !currentNumbersInDB.contains($0.number) }
+            tableNumbers = currentNumbersInDB
+
             self.clearBillsHandles(cafeID: cafeID)
             
-            for number in newTableNumbers {
-                let billRef = db.child("Places").child(cafeID).child("tables").child("\(number)").child("bill")
+            for number in currentNumbersInDB {
+                let tablePath = db.child("Places").child(cafeID).child("tables").child("\(number)")
                 
-                let handle = billRef.observe(.value) { _ in
-                    // изменился bill у моих столов — перезагружаем всё
-                    self.fetchData(cafeID: cafeID, selfID: selfID, numbers: tableNumbers)
+                let handle = tablePath.observe(.value) { snapshot in
+                    guard snapshot.exists(), let dict = snapshot.value as? [String: Any] else { return }
+                    
+                    let updatedTable = Table(
+                        number: dict["tableNumber"] as? Int ?? 0,
+                        personCount: dict["personCount"] as? Int ?? 0,
+                        maximumPersonCount: dict["maximumPersonCount"] as? Int ?? 0,
+                        currentPersonCount: dict["currentPersonCount"] as? Int ?? 0,
+                        client1Bill: dict["client1Bill"] as? Double ?? 0,
+                        client2Bill: dict["client2Bill"] as? Double ?? 0,
+                        client3Bill: dict["client3Bill"] as? Double ?? 0,
+                        client4Bill: dict["client4Bill"] as? Double ?? 0,
+                        client5Bill: dict["client5Bill"] as? Double ?? 0,
+                        client6Bill: dict["client6Bill"] as? Double ?? 0,
+                        bill: dict["bill"] as? Double ?? 0,
+                        waiterID: dict["waiterID"] as? String ?? ""
+                    )
+                    
+                    if let index = tables.firstIndex(where: { $0.number == updatedTable.number }) {
+                        tables[index] = updatedTable
+                    } else {
+                        tables.append(updatedTable)
+                        tables.sort { $0.number < $1.number }
+                    }
+                    
+                    DispatchQueue.main.async {
+                        self.tableView.reloadData()
+                        self.emptyImageView.isHidden = !tables.isEmpty
+                    }
                 }
                 self.billsHandles["\(number)"] = handle
             }
             
-            self.fetchData(cafeID: cafeID, selfID: selfID, numbers: newTableNumbers)
+            if currentNumbersInDB.isEmpty {
+                DispatchQueue.main.async {
+                    self.tableView.reloadData()
+                    self.emptyImageView.isHidden = false
+                }
+            }
         })
     }
+
+
 
     private func fetchData(cafeID: String, selfID: String, numbers: [Int]) {
         loadTables(cafeID, selfID, numbers) { fetchedTables in

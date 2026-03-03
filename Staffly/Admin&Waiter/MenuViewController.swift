@@ -21,6 +21,7 @@ class MenuViewController: UIViewController {
     var tableIndex: Int = 0
     var currentClient: Int = 0
     var selectedProducts: [SelectedProduct] = []
+    var initialClientBalance: Double = 0.0
     
     // Словарь: ID блюда -> Список ID клиентов, между которыми оно делится
     var sharedDishes: [String: [Int]] = [:]
@@ -70,10 +71,10 @@ class MenuViewController: UIViewController {
 
     private func loadInitialData() {
         activityIndicatorView.startAnimating()
-        // Используем твой Helper-метод
         loadSelectedProducts(cafeID, currentClient, tableNumbers[tableIndex]) { [weak self] data in
             guard let self = self else { return }
             self.selectedProducts = data
+            self.initialClientBalance = data.reduce(0) { $0 + ($1.product.productPrice * Double($1.quantity)) }
             self.updateSummaLabel()
             self.tableView.reloadData()
             self.activityIndicatorView.stopAnimating()
@@ -81,10 +82,21 @@ class MenuViewController: UIViewController {
     }
 
     func updateSummaLabel() {
-        let total = selectedProducts.reduce(0) { $0 + ($1.product.productPrice * Double($1.quantity)) }
+        var currentSelectionTotal: Double = 0
+        
+        for product in orderedProducts {
+            let participants = sharedDishes[product.id] ?? [currentClient]
+            if participants.contains(currentClient) {
+                let sharePrice = (product.productPrice / Double(participants.count))
+                currentSelectionTotal += sharePrice
+            }
+        }
+        
+        let total = initialClientBalance + currentSelectionTotal
         summaSelectedProducts = total.roundUp()
         summaLabel.text = String(format: "%.2fр.", summaSelectedProducts)
     }
+
 
     func sameClients(_ a: [Int], _ b: [Int]) -> Bool {
         return Set(a) == Set(b)
@@ -222,41 +234,56 @@ extension MenuViewController: UITableViewDelegate, UITableViewDataSource {
     }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "cell") as! ProductTableViewCell
+        let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as! ProductTableViewCell
         let product = products[indexPath.row]
         
-        cell.productSwitch.isOn = orderedProducts.contains(where: { $0.id == product.id })
+        // Цвет для выделенных ячеек
+        let highlightColor = UIColor(red: 0.796, green: 0.874, blue: 0.811, alpha: 0.5)
+        
+        // 1. Проверяем, выбрано ли блюдо сейчас (в текущую сессию)
+        let isSelectedNow = orderedProducts.contains(where: { $0.id == product.id })
+        
+        // 2. Проверяем, было ли оно заказано ранее (в базе данных)
+        let currentShared = sharedDishes[product.id] ?? [currentClient]
+        let isAlreadyInDB = selectedProducts.contains(where: { $0.product.id == product.id && sameClients($0.sharedWith, currentShared) })
+        
+        // Итоговое состояние: подсвечиваем, если блюдо есть хоть где-то
+        let isActuallySelected = isSelectedNow || isAlreadyInDB
+        
+        // Настройка внешнего вида
+        cell.productSwitch.setOn(isSelectedNow, animated: false)
+        cell.backgroundColor = isActuallySelected ? highlightColor : .white
         cell.menuNumberLabel.text = "\(product.menuNumber)"
-        cell.productImageView.image = globalImageCache[product.id] ?? UIImage(named: "блюдо")
-        cell.productImageView.layer.cornerRadius = 17
-        cell.productImageView.clipsToBounds = true
         cell.productNameLabel.text = product.productName
         cell.productPriceLabel.text = "\(product.productPrice.roundValue())р."
         
-        let currentShared = sharedDishes[product.id] ?? [currentClient]
-        if self.selectedProducts.contains(where: { $0.product.id == product.id && sameClients($0.sharedWith, currentShared) }) {
-            cell.backgroundColor = UIColor(red: 0.796, green: 0.874, blue: 0.811, alpha: 0.5)
-        } else {
-            cell.backgroundColor = .white
-        }
+        // Картинка
+        cell.productImageView.image = globalImageCache[product.id] ?? UIImage(named: "блюдо")
+        cell.productImageView.layer.cornerRadius = 17
+        cell.productImageView.clipsToBounds = true
         
-        cell.switchAction = {
+        // Логика переключателя
+        cell.switchAction = { [weak self, weak cell] in
+            guard let self = self, let cell = cell else { return }
+            
             if cell.productSwitch.isOn {
-                self.orderedProducts.append(product)
-                let clients = self.sharedDishes[product.id] ?? [self.currentClient]
-                let sharePrice = (product.productPrice / Double(clients.count)).roundUp()
-                
-                var productCopy = product
-                productCopy.productPrice = sharePrice
-                self.addProductToCurrentClient(productCopy, qty: 1, sharedWith: clients)
-                cell.backgroundColor = UIColor(red: 0.796, green: 0.874, blue: 0.811, alpha: 1)
+                // Добавляем в список новых заказов
+                if !self.orderedProducts.contains(where: { $0.id == product.id }) {
+                    self.orderedProducts.append(product)
+                }
             } else {
+                // Убираем из новых заказов и очищаем разделение, если оно было
                 self.orderedProducts.removeAll(where: { $0.id == product.id })
-                let clients = self.sharedDishes[product.id] ?? [self.currentClient]
-                self.selectedProducts.removeAll(where: { $0.product.id == product.id && self.sameClients($0.sharedWith, clients) })
-                self.updateSummaLabel()
-                cell.backgroundColor = .white
+                self.sharedDishes.removeValue(forKey: product.id)
             }
+            
+            // Плавная анимация цвета БЕЗ перезагрузки всей таблицы
+            UIView.animate(withDuration: 0.3) {
+                cell.backgroundColor = cell.productSwitch.isOn ? highlightColor : .white
+            }
+            
+            // Обновляем только лейбл с общей суммой
+            self.updateSummaLabel()
         }
         
         cell.layer.cornerRadius = 15
@@ -264,6 +291,7 @@ extension MenuViewController: UITableViewDelegate, UITableViewDataSource {
         
         return cell
     }
+
 
     func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         // Доп пожелания
@@ -313,26 +341,23 @@ extension MenuViewController: UITableViewDelegate, UITableViewDataSource {
 
             alert.addAction(UIAlertAction(title: "Готово", style: .default) { _ in
                 let selectedClients = switches.enumerated().filter { $0.element.isOn }.map { $0.offset + 1 }
-                self.selectedProducts.removeAll(where: { $0.product.id == product.id })
-
+                
                 if selectedClients.isEmpty {
                     self.sharedDishes.removeValue(forKey: product.id)
+                    self.orderedProducts.removeAll(where: { $0.id == product.id })
                 } else {
                     self.sharedDishes[product.id] = selectedClients
+                    // Если блюдо разделено, оно автоматически считается "выбранным" (ordered)
                     if !self.orderedProducts.contains(where: { $0.id == product.id }) {
                         self.orderedProducts.append(product)
                     }
-                    if selectedClients.contains(self.currentClient) {
-                        let sharePrice = (product.productPrice / Double(selectedClients.count)).roundUp()
-                        var productCopy = product
-                        productCopy.productPrice = sharePrice
-                        self.addProductToCurrentClient(productCopy, qty: 1, sharedWith: selectedClients)
-                    }
                 }
-                self.updateSummaLabel()
+                
+                self.updateSummaLabel() // Лейбл теперь подхватит новую долю цены
                 self.tableView.reloadRows(at: [indexPath], with: .automatic)
                 completionHandler(true)
             })
+
             alert.addAction(UIAlertAction(title: "Отмена", style: .cancel))
             self.present(alert, animated: true)
         }
